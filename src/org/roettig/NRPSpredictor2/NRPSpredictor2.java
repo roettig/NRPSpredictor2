@@ -141,7 +141,7 @@ public class NRPSpredictor2
 	private static boolean useNRPS1input = false;
 	private static String inputfile = "";
 	
-	private static String modeldir = "/tmp/";
+	private static String modeldir = "/home/roettig/coops/nrps2/models";
 	
 	public static void main(String[] argv) throws Exception
 	{
@@ -167,6 +167,31 @@ public class NRPSpredictor2
 			detect("3class", sc);
 		}
 		
+		// large cluster predictions
+		String large_cluster[] = {"phe,trp,phg,tyr,bht","ser,thr,dhpg,hpg","gly,ala,val,leu,ile,abu,iva","asp,asn,glu,gln,aad","cys","orn,lys,arg","pro,pip","dhb,sal"}; 
+		for(String sc: large_cluster)
+		{
+			System.out.println("#"+sc);
+			detect("lc", sc);
+		}
+		
+		// small cluster predictions
+		String small_cluster[] = {"aad","val,leu,ile,abu,iva","arg","asp,asn","cys","dhb,sal","glu,gln","orn,horn","tyr,bht","pro","ser","dhpg,hpg","phe,trp","gly,ala","thr"}; 
+		for(String sc: small_cluster)
+		{
+			System.out.println("#"+sc);
+			detect("sc", sc);
+		}
+		
+		// single aa predictions
+		String single_cluster[] = {"aad","ala","arg","asn","asp","bht","cys","dhb","dhpg","gln","glu","gly","hpg","ile","iva","leu","lys","orn","phe","pip","pro","ser","thr","trp","tyr","val"}; 
+		for(String sc: single_cluster)
+		{
+			System.out.println("#"+sc);
+			detect("single", sc);
+		}
+		
+		
 		for(ADomain ad: adoms)
 		{
 			System.out.println(ad.sid);
@@ -175,9 +200,6 @@ public class NRPSpredictor2
 				System.out.println(det);
 			}
 		}
-		
-		// large cluster predictions
-		String large_cluster[] = {"polar, uncharged, thiol","cyclic aliphatic chain with polar NH2","long positively charged chain","aliphatic with ending H-donor","aromatic","apolar, aliphatic","hydroxy benzoic acid derivatives ","aliphatic or phenyl-group with OH"};
 	}
 	
 	public static void detect(String type, String label) throws MalformedURLException, ParseException
