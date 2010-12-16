@@ -80,13 +80,10 @@ public class NRPSpredictor2
 						break;
 					if(line.contains("[no predictions"))
 					{
-						cur_adom.largecluster_predictions.add("nop");
-						cur_adom.largecluster_scores.add(0.0);
 						continue;
 					}
 					String toks[] = line.split(":");
-					cur_adom.largecluster_predictions.add(toks[0]);
-					cur_adom.largecluster_scores.add(Double.parseDouble(toks[1]));
+					cur_adom.addDetection("lc", toks[0], Double.parseDouble(toks[1]));
 				}
 				while((line = br.readLine())!=null)
 				{
@@ -94,13 +91,10 @@ public class NRPSpredictor2
 						break;
 					if(line.contains("[no predictions"))
 					{
-						cur_adom.smallcluster_predictions.add("no prediction possible");
-						cur_adom.smallcluster_scores.add(0.0);
 						continue;
 					}
 					String toks[] = line.split(":");
-					cur_adom.smallcluster_predictions.add(toks[0]);
-					cur_adom.smallcluster_scores.add(Double.parseDouble(toks[1]));
+					cur_adom.addDetection("sc", toks[0], Double.parseDouble(toks[1]));
 				}
 				continue;
 			}
