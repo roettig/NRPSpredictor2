@@ -19,8 +19,17 @@ public class Detection  implements Serializable
 		score = _score;
 	}
 	
+	public Detection(String _type, String _label, double _score, double prec)
+	{
+		type  = _type;
+		label = _label;
+		score = _score;
+		precision = prec;
+	}
+	
 	private String type;
 	private String label;
+	private double precision;
 	private double score;
 
 	public String getType()
@@ -57,4 +66,16 @@ public class Detection  implements Serializable
 	{
 		return String.format(Locale.ENGLISH,"[%s / %s] score: %.8f", type, label, score );
 	}
+
+	public double getPrecision()
+	{
+		return precision;
+	}
+
+	public void setPrecision(double precision)
+	{
+		this.precision = precision;
+	}
+	
+	
 }

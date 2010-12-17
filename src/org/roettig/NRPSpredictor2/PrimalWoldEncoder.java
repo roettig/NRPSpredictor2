@@ -17,6 +17,7 @@ public class PrimalWoldEncoder
 
 	public double[] encode(String t)
 	{
+		t = t.toUpperCase();
 		int N = t.length();
 		double ret[] = new double[3*N];
 		int idx = 0;

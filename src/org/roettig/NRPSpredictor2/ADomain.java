@@ -26,6 +26,16 @@ public class ADomain implements Serializable
 	
 	private List<Detection> detections = new ArrayList<Detection>();
 	
+	public boolean hasDetections(String pattern)
+	{
+		for(Detection det: detections)
+		{
+			if(det.getType().contains(pattern))
+				return true;
+		}
+		return false;
+	}
+	
 	public List<Detection> getDetections()
 	{
 		return detections;
@@ -39,6 +49,11 @@ public class ADomain implements Serializable
 	public void addDetection(String type, String label, double score)
 	{
 		detections.add( new Detection(type,label,score) );
+	}
+	
+	public void addDetection(String type, String label, double score, double prec)
+	{
+		detections.add( new Detection(type,label,score, prec) );
 	}
 
 	public String getSid()
@@ -59,6 +74,21 @@ public class ADomain implements Serializable
 	public void setSig8a(String sig8a)
 	{
 		this.sig8a = sig8a;
+		if(sigstach==null)
+		{
+			StringBuffer sb = new StringBuffer();
+			sb.append(sig8a.charAt(5));
+			sb.append(sig8a.charAt(6));
+			sb.append(sig8a.charAt(9));
+			sb.append(sig8a.charAt(12));
+			sb.append(sig8a.charAt(14));
+			sb.append(sig8a.charAt(16));
+			sb.append(sig8a.charAt(21));
+			sb.append(sig8a.charAt(29));
+			sb.append(sig8a.charAt(30));
+			sb.append('K');
+			sigstach = sb.toString();
+		}
 	}
 
 	public String getSigstach()

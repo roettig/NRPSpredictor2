@@ -1,20 +1,24 @@
 package org.roettig.NRPSpredictor2;
 
 import gnu.getopt.Getopt;
+
+import java.beans.XMLDecoder;
 import java.beans.XMLEncoder;
+import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
 import jnisvmlight.FeatureVector;
 import jnisvmlight.SVMLightModel;
 import libsvm.svm;
@@ -41,7 +45,7 @@ public class NRPSpredictor2
 			line = line.trim();
 			String toks[] = line.split("\\\t");
 			cur_adom = new ADomain();
-			cur_adom.sig8a = toks[0];
+			cur_adom.setSig8a(toks[0]);
 			if(toks.length>1)
 				cur_adom.sid = toks[1];
 			adoms.add(cur_adom);
@@ -90,7 +94,7 @@ public class NRPSpredictor2
 						continue;
 					}
 					String toks[] = line.split(":");
-					cur_adom.addDetection("lc", toks[0], Double.parseDouble(toks[1]));
+					cur_adom.addDetection("nrps1_lc", toks[0], Double.parseDouble(toks[1]));
 				}
 				while((line = br.readLine())!=null)
 				{
@@ -101,7 +105,7 @@ public class NRPSpredictor2
 						continue;
 					}
 					String toks[] = line.split(":");
-					cur_adom.addDetection("sc", toks[0], Double.parseDouble(toks[1]));
+					cur_adom.addDetection("nrps1_sc", toks[0], Double.parseDouble(toks[1]));
 				}
 				continue;
 			}
@@ -116,16 +120,31 @@ public class NRPSpredictor2
 	
 	public static void store(String filename, List<ADomain> data) throws IOException
 	{
+		/*
 		FileOutputStream f_out = new FileOutputStream(filename);
 		// Write object with ObjectOutputStream
 		ObjectOutputStream obj_out = new ObjectOutputStream (f_out);
 		// Write object out to disk
 		obj_out.writeObject( data );
 		f_out.close();
+		*/
+		XMLEncoder encoder =
+	           new XMLEncoder(
+	              new BufferedOutputStream(
+	                new FileOutputStream(outputfile)));
+	    encoder.writeObject(data);
+	    encoder.close();
 	}
 	
 	public static List<ADomain> load(String filename) throws Exception
 	{
+		XMLDecoder decoder =
+            new XMLDecoder(new BufferedInputStream(
+                new FileInputStream(filename)));
+        List<ADomain> o = (List<ADomain>) decoder.readObject();
+        decoder.close();
+        return o;
+		/*
 		// restore object from file ...
 		// Read from disk using FileInputStream
 		FileInputStream f_in = new FileInputStream(filename);
@@ -135,6 +154,7 @@ public class NRPSpredictor2
 		List<ADomain> ret = (List<ADomain>) obj_in.readObject();
 		f_in.close();
 		return ret;
+		*/
 	}
 	
 	public static void main(String[] argv) throws Exception
@@ -144,10 +164,12 @@ public class NRPSpredictor2
 		
 		if(useNRPS1input)
 		{
+			System.out.println("using NRPS1 input");
 			parseNRPS1(inputfile);
 		}
 		else
 		{
+			System.out.println("using signature input");
 			parseSigs(inputfile);
 		}
 		// we now have a list of adomain objects
@@ -157,12 +179,7 @@ public class NRPSpredictor2
 			fungalPrediction();
 		
 		// export annotated adomains
-		XMLEncoder encoder =
-	           new XMLEncoder(
-	              new BufferedOutputStream(
-	                new FileOutputStream(outputfile)));
-	    encoder.writeObject(adoms);
-	    encoder.close();
+		store(outputfile,adoms);
 	}
 	
 	public static void fungalPrediction() throws MalformedURLException, ParseException
@@ -185,6 +202,7 @@ public class NRPSpredictor2
 		
 		// large cluster predictions
 		String large_cluster[] = {"phe,trp,phg,tyr,bht","ser,thr,dhpg,hpg","gly,ala,val,leu,ile,abu,iva","asp,asn,glu,gln,aad","cys","orn,lys,arg","pro,pip","dhb,sal"}; 
+		
 		for(String sc: large_cluster)
 		{
 			detect("lc", sc);
@@ -203,10 +221,6 @@ public class NRPSpredictor2
 		{
 			detect("single", sc);
 		}
-				
-		/*
-		
-	     */
 	}
 	
 	public static void checkAD(String model) throws IOException
@@ -228,6 +242,60 @@ public class NRPSpredictor2
 		
 	}
 	
+	public static Map<String,Double> precs = new HashMap<String,Double>();
+	
+	public static void fillPrecs()
+	{
+		String three_class[] = {"hydrophilic","hydrophobic-aliphatic","hydrophobic-aromatic"};
+		String large_cluster[] = {"phe,trp,phg,tyr,bht","ser,thr,dhpg,hpg","gly,ala,val,leu,ile,abu,iva","asp,asn,glu,gln,aad","cys","orn,lys,arg","pro,pip","dhb,sal"};
+		String small_cluster[] = {"aad","val,leu,ile,abu,iva","arg","asp,asn","cys","dhb,sal","glu,gln","orn,horn","tyr,bht","pro","ser","dhpg,hpg","phe,trp","gly,ala","thr"};
+		String single_cluster[] = {"aad","ala","arg","asn","asp","bht","cys","dhb","dhpg","gln","glu","gly","hpg","ile","iva","leu","lys","orn","phe","pip","pro","ser","thr","trp","tyr","val"};
+		precs.put("hydrophilic",0.963);
+		precs.put("hydrophobic-aliphatic",0.954);
+		precs.put("hydrophobic-aromatic",0.973);
+		precs.put("phe,trp,phg,tyr,bht", 0.978);
+		precs.put("ser,thr,dhpg,hpg", 0.970 );
+		precs.put("gly,ala,val,leu,ile,abu,iva",0.956 );
+		precs.put("asp,asn,glu,gln,aad", 0.956);
+		precs.put("cys", 0.996);
+		precs.put("orn,lys,arg", 0.984);
+		precs.put("pro,pip", 0.994);
+		precs.put("dhb,sal", 1.00);
+		precs.put("aad",1.00 );
+		precs.put("val,leu,ile,abu,iva", 0.979);
+		precs.put("arg",0.994 );
+		precs.put("asp,asn", 0.996);
+		precs.put("cys", 0.996);
+		precs.put("dhb,sal", 1.000);
+		precs.put("glu,gln", 0.967);
+		precs.put("orn,horn",0.994 );
+		precs.put("tyr,bht", 0.958);
+		precs.put("pro", 0.996);
+		precs.put("ser", 0.998);
+		precs.put("dhpg,hpg", 1.000);
+		precs.put("phe,trp", 0.894);
+		precs.put("gly,ala", 0.973);
+		precs.put("thr", 1.000);
+		precs.put("ala",0.968);
+		precs.put("asn",1.000);
+		precs.put("asp",0.898);
+		precs.put("bht",0.828);
+		precs.put("dhb",0.962);
+		precs.put("dhpg",0.996);
+		precs.put("gln",0.870);
+		precs.put("glu",0.991);
+		precs.put("gly",0.998);
+		precs.put("hpg",0.969);
+		precs.put("ile",0.871);
+		precs.put("iva",0.778);
+		precs.put("leu",0.957);
+		precs.put("lys",0.996);
+		precs.put("phe",0.852);
+		precs.put("trp",0.496);
+		precs.put("tyr",0.721);
+		precs.put("val",0.826);
+	}
+	
 	public static void detect(String type, String label) throws MalformedURLException, ParseException
 	{
 		SVMLightModel m = SVMLightModel.readSVMLightModelFromURL(new URL(String.format("file:///%s/%s/[%s].mdl",modeldir,type,label)));
@@ -238,7 +306,10 @@ public class NRPSpredictor2
 			double yp = m.classify(makeFVec(fv));
 			if(yp>0.0)
 			{
-				ad.addDetection(type, label, yp);
+				if(precs.containsKey(label))
+					ad.addDetection(type, label, yp, precs.get(label));
+				else
+					ad.addDetection(type, label, yp, 0.0);
 			}
 		}
 	}
@@ -280,8 +351,8 @@ public class NRPSpredictor2
 	
 	public static void parseCommandline(String[] argv)
 	{
-	
-		Getopt g = new Getopt("NRPSpredictor2", argv, "ni:o:b");
+		fillPrecs();
+		Getopt g = new Getopt("NRPSpredictor2", argv, "i:o:b:s:");
 		//
 		int c;
 		String arg;
@@ -289,12 +360,20 @@ public class NRPSpredictor2
 		{
 			switch(c)
 			{
-			case 'n':
-				useNRPS1input = true; 
+			case 's':
+				arg = g.getOptarg();
+				if(arg.equals("1"))
+					useNRPS1input = false;
+				else
+					useNRPS1input = true;
 				break;
 				//
 			case 'b':
-				bacterialMode = true; 
+				arg = g.getOptarg();
+				if(arg.equals("1"))
+					bacterialMode = true;
+				else
+					bacterialMode = false;
 				break;
 				//				
 			case 'i':
