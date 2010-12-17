@@ -17,38 +17,25 @@ public class ADomain implements Serializable
 {
 	private static final long	serialVersionUID	= -8665277739063399904L;
 	
-	public class Detection
-	{
-		public Detection(String _type, String _label, double _score)
-		{
-			type  = _type;
-			label = _label;
-			score = _score;
-		}
-		public String type;
-		public String label;
-		public double score;
-		
-		public String toString()
-		{
-			return String.format(Locale.ENGLISH,"[%s / %s] score: %.3f", type, label, score );
-		}
-	}
-	
 	public String sid;
 	public String sig8a;
 	public String sigstach;
 	public String specSmall;
 	public String specLarge;
+	public boolean outlier;
 	
-	public List<Detection> detections = new ArrayList<Detection>();
-	
+	private List<Detection> detections = new ArrayList<Detection>();
 	
 	public List<Detection> getDetections()
 	{
 		return detections;
 	}
-	
+
+	public void setDetections(List<Detection> detections)
+	{
+		this.detections = detections;
+	}
+
 	public void addDetection(String type, String label, double score)
 	{
 		detections.add( new Detection(type,label,score) );
@@ -112,6 +99,18 @@ public class ADomain implements Serializable
         decoder.close();
         return o;
     }
+
+	public boolean isOutlier()
+	{
+		return outlier;
+	}
+
+	public void setOutlier(boolean outlier)
+	{
+		this.outlier = outlier;
+	}
+	
+	
 
 
 }
