@@ -20,9 +20,16 @@ public class ADomain implements Serializable
 	public String sid;
 	public String sig8a;
 	public String sigstach;
-	public String specSmall;
-	public String specLarge;
+	public String spec;
 	public boolean outlier;
+	
+	public static String NRPS2_THREE_CLUSTER  = "NRPS2_THREE_CLUSTER";
+	public static String NRPS2_LARGE_CLUSTER  = "NRPS2_LARGE_CLUSTER";
+	public static String NRPS2_SMALL_CLUSTER  = "NRPS2_SMALL_CLUSTER";
+	public static String NRPS2_SINGLE_CLUSTER = "NRPS2_SINGLE_CLUSTER";
+	public static String NRPS2_STACH_NN       = "NRPS2_STACH_NN";
+	public static String NRPS1_LARGE_CLUSTER  = "NRPS1_LARGE_CLUSTER";
+	public static String NRPS1_SMALL_CLUSTER  = "NRPS1_SMALL_CLUSTER";
 	
 	private List<Detection> detections = new ArrayList<Detection>();
 	
@@ -34,6 +41,24 @@ public class ADomain implements Serializable
 				return true;
 		}
 		return false;
+	}
+	
+	public Detection getBestDetection(String type)
+	{
+		double maxScore = Double.NEGATIVE_INFINITY;
+		Detection best  = null;
+		for(Detection det: detections)
+		{
+			if(det.getType().equals(type))
+			{
+				if(det.getScore()>maxScore)
+				{
+					maxScore = det.getScore();
+					best     = det;
+				}
+			}
+		}
+		return best;
 	}
 	
 	public List<Detection> getDetections()
@@ -140,7 +165,14 @@ public class ADomain implements Serializable
 		this.outlier = outlier;
 	}
 	
-	
+	public static void main(String[] args)
+	{
+		ADomain ad = new ADomain();
+		ad.addDetection(ADomain.NRPS2_SINGLE_CLUSTER, "asp", 1.2);
+		ad.addDetection(ADomain.NRPS2_SINGLE_CLUSTER, "glu", 1.5);
+		ad.addDetection(ADomain.NRPS2_SINGLE_CLUSTER, "ala", 0.5);
+		System.out.println(ad.getBestDetection(ADomain.NRPS2_SINGLE_CLUSTER));
+	}
 
 
 }

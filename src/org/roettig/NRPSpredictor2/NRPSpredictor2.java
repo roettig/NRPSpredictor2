@@ -7,10 +7,13 @@ import java.beans.XMLEncoder;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.ParseException;
@@ -27,22 +30,82 @@ import libsvm.svm_node;
 
 public class NRPSpredictor2
 {	
+	
+	public static void main(String[] argv) throws Exception
+	{
+		datadir = System.getProperty("datadir",datadir);
+		
+		if(argv.length==0)
+		{
+			System.out.println("Usage: NRPSPredictor2 -i <inputfile> -r <reportfile> -s [0|1 use signatures?]\n");
+			System.exit(1);
+		}
+		
+		initSigDB();
+		
+		parseCommandline(argv);
+		
+		banner();
+		
+		if(useNRPS1input)
+		{
+			System.out.println("## using NRPS1 input");
+			parseNRPS1(inputfile);
+		}
+		else
+		{
+			System.out.println("## using signature input");
+			parseSigs(inputfile);
+		}
+		
+		System.out.println("## start predicting on "+adoms.size()+" signatues");
+		
+		// we now have a list of adomain objects
+		if(bacterialMode)
+			bacterialPrediction();
+		else
+			fungalPrediction();
+		
+		// export annotated adomains
+		
+		if(outputfile!=null)
+			store(outputfile,adoms);
+		if(reportfile!=null)
+			report(reportfile,adoms);
+	}
+	
+	public static void banner()
+	{
+		System.out.println("\n");
+		System.out.println(" ##        Welcome to NRPSpredictor2 by       ##");
+		System.out.println(" ##    Marc Röttig, Marnix Medema, Kai Blin   ##");
+		System.out.println(" ##     based on work by Christian Rausch     ##\n");
+		System.out.println(" please cite: http://dx.doi.org/10.1093/nar/gki885");
+		System.out.println(" please cite: <hopefully NARW paper here>\n\n");
+	}
+	
 	private static boolean useNRPS1input  = false;
 	private static boolean bacterialMode  = true;
-	private static String inputfile  = "";
-	private static String outputfile = "";
-	private static String modeldir = "/home/roettig/coops/nrps2/models";
+	private static String inputfile;
+	private static String outputfile;
+	private static String reportfile;
+	private static String datadir = "/home/roettig/coops/nrps2/models";
 	
 	private static List<ADomain> adoms = new ArrayList<ADomain>();
 	
 	public static void parseSigs(String filename) throws Exception
 	{
+		if(!checkSignatureFormat(new File(filename)))
+			crash("invalid signature file supplied");
+		
 		BufferedReader br = new BufferedReader(new FileReader(filename));
 		String line = null;
 		ADomain cur_adom = null;
 		while ((line = br.readLine()) != null)   
 		{
 			line = line.trim();
+			if(line.equals(""))
+				continue;
 			String toks[] = line.split("\\\t");
 			cur_adom = new ADomain();
 			cur_adom.setSig8a(toks[0]);
@@ -52,6 +115,38 @@ public class NRPSpredictor2
 		}
 	}
 	
+	public static boolean checkSignatureFormat(File infile) throws IOException
+	{
+		BufferedReader br = new BufferedReader(new FileReader(infile));
+		String line = "";
+		while((line=br.readLine())!=null)
+		{
+			line = line.trim();
+			if(line.equals(""))
+				continue;
+			String toks[] = line.split("\\t");
+			if(toks.length!=2)
+			{
+				return false;
+			}
+			String sig = toks[0].toUpperCase();
+			if(sig.length()!=34)
+			{
+				return false;
+			}
+			if(!sig.matches("[A,C,D,E,F,G,H,I,K,L,M,N,P,Q,R,S,T,V,W,X,Y,-]+"))
+				return false;
+		}
+		br.close();
+		return true;
+	}
+	
+	private static void crash(String msg)
+	{
+		System.err.println(msg);
+		System.exit(1);
+	}
+
 	public static void parseNRPS1(String filename) throws Exception
 	{
 		BufferedReader br = new BufferedReader(new FileReader(filename));
@@ -120,14 +215,6 @@ public class NRPSpredictor2
 	
 	public static void store(String filename, List<ADomain> data) throws IOException
 	{
-		/*
-		FileOutputStream f_out = new FileOutputStream(filename);
-		// Write object with ObjectOutputStream
-		ObjectOutputStream obj_out = new ObjectOutputStream (f_out);
-		// Write object out to disk
-		obj_out.writeObject( data );
-		f_out.close();
-		*/
 		XMLEncoder encoder =
 	           new XMLEncoder(
 	              new BufferedOutputStream(
@@ -144,44 +231,63 @@ public class NRPSpredictor2
         List<ADomain> o = (List<ADomain>) decoder.readObject();
         decoder.close();
         return o;
-		/*
-		// restore object from file ...
-		// Read from disk using FileInputStream
-		FileInputStream f_in = new FileInputStream(filename);
-
-		// Read object using ObjectInputStream
-		ObjectInputStream obj_in = new ObjectInputStream (f_in);
-		List<ADomain> ret = (List<ADomain>) obj_in.readObject();
-		f_in.close();
-		return ret;
-		*/
 	}
 	
-	public static void main(String[] argv) throws Exception
+	
+	
+	private static List<String> specs     = new ArrayList<String>();
+	private static List<String> sig8a     = new ArrayList<String>();
+	private static List<String> sigstach = new ArrayList<String>();
+	
+	private static void initSigDB() throws IOException
 	{
-		modeldir = System.getProperty("modeldir",modeldir);
-		parseCommandline(argv);
-		
-		if(useNRPS1input)
+		BufferedReader in = new BufferedReader(new FileReader(datadir+"/labeled_sigs"));
+		String line = "";
+		while((line=in.readLine())!=null)
 		{
-			System.out.println("using NRPS1 input");
-			parseNRPS1(inputfile);
+			String toks[] = line.split("\\\t");
+			specs.add(toks[0]);
+			sig8a.add(toks[1]);
+			sigstach.add(toks[2]);
 		}
-		else
-		{
-			System.out.println("using signature input");
-			parseSigs(inputfile);
-		}
-		// we now have a list of adomain objects
-		if(bacterialMode)
-			bacterialPrediction();
-		else
-			fungalPrediction();
-		
-		// export annotated adomains
-		store(outputfile,adoms);
+		in.close();
 	}
 	
+	
+
+	private static void report(String outputfile, List<ADomain> adoms) throws FileNotFoundException
+	{
+		PrintWriter out = new PrintWriter( new File(reportfile) );
+		for(ADomain adom: adoms)
+		{
+			// id <tab> 8a_sig <tab> stachelhaus_sig <tab> three_class_prediction_nrps2 <tab> large_cluster_prediction_nrps2 <tab> small_cluster_prediction_nrps2 <tab> single_aa_prediction_nrps2 <tab> nearest_stachelhaus_specificity <tab> large_cluster_prediction_nrps1 <tab> small_cluster_prediction_nrps1 <tab> isAdomainUnusual?
+			
+			Detection best_THREE_CLASS = adom.getBestDetection(ADomain.NRPS2_THREE_CLUSTER);
+			String pred_THREE_CLASS = (best_THREE_CLASS!=null?best_THREE_CLASS.getLabel():"N/A");
+			
+			Detection best_LARGE_CLASS = adom.getBestDetection(ADomain.NRPS2_LARGE_CLUSTER);
+			String pred_LARGE_CLASS = (best_LARGE_CLASS!=null?best_LARGE_CLASS.getLabel():"N/A");
+			
+			Detection best_SMALL_CLASS = adom.getBestDetection(ADomain.NRPS2_SMALL_CLUSTER);
+			String pred_SMALL_CLASS = (best_SMALL_CLASS!=null?best_SMALL_CLASS.getLabel():"N/A");
+			
+			Detection best_SINGLE_CLASS = adom.getBestDetection(ADomain.NRPS2_SINGLE_CLUSTER);
+			String pred_SINGLE_CLASS = (best_SINGLE_CLASS!=null?best_SINGLE_CLASS.getLabel():"N/A");
+			
+			Detection best_STACH_NN = adom.getBestDetection(ADomain.NRPS2_STACH_NN);
+			String pred_STACH_NN = (best_STACH_NN!=null?best_STACH_NN.getLabel():"N/A");
+			
+			Detection best_LARGE_CLASS1 = adom.getBestDetection(ADomain.NRPS1_LARGE_CLUSTER);
+			String pred_LARGE_CLASS1 = (best_LARGE_CLASS1!=null?best_LARGE_CLASS1.getLabel():"N/A");
+			
+			Detection best_SMALL_CLASS1 = adom.getBestDetection(ADomain.NRPS1_SMALL_CLUSTER);
+			String pred_SMALL_CLASS1 = (best_SMALL_CLASS1!=null?best_SMALL_CLASS1.getLabel():"N/A");
+			
+			out.println(String.format("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%d",adom.sid,adom.sig8a,adom.sigstach, pred_THREE_CLASS, pred_LARGE_CLASS, pred_SMALL_CLASS, pred_SINGLE_CLASS, pred_STACH_NN, pred_LARGE_CLASS1, pred_SMALL_CLASS1 ,(adom.isOutlier()?1:0)));
+		}
+		out.close();
+	}
+
 	public static void fungalPrediction() throws MalformedURLException, ParseException
 	{	
 		
@@ -189,43 +295,72 @@ public class NRPSpredictor2
 	
 	public static void bacterialPrediction() throws ParseException, IOException
 	{	
+		PrimalEncoder encR = new PrimalRauschEncoder();
 		
 		// check applicability domain
 		checkAD("bacterial");
 		
-		// 3 class predictions
-		String three_class[] = {"hydrophilic","hydrophobic-aliphatic","hydrophobic-aromatic"};
-		for(String sc: three_class)
-		{
-			detect("3class", sc);
-		}
+		//////////
+		// NRPS1
+		/////////
 		
 		// large cluster predictions
 		String large_cluster[] = {"phe,trp,phg,tyr,bht","ser,thr,dhpg,hpg","gly,ala,val,leu,ile,abu,iva","asp,asn,glu,gln,aad","cys","orn,lys,arg","pro,pip","dhb,sal"}; 
 		
 		for(String sc: large_cluster)
 		{
-			detect("lc", sc);
+			detect(ADomain.NRPS1_LARGE_CLUSTER, sc, encR);
 		}
 		
 		// small cluster predictions
 		String small_cluster[] = {"aad","val,leu,ile,abu,iva","arg","asp,asn","cys","dhb,sal","glu,gln","orn,horn","tyr,bht","pro","ser","dhpg,hpg","phe,trp","gly,ala","thr"}; 
 		for(String sc: small_cluster)
 		{			
-			detect("sc", sc);
+			detect(ADomain.NRPS1_SMALL_CLUSTER, sc, encR);
+		}
+		
+		
+		//////////
+		// NRPS2 
+		/////////
+		
+		PrimalEncoder encW = new PrimalWoldEncoder();
+		
+		// 3 class predictions
+		String three_class[] = {"hydrophilic","hydrophobic-aliphatic","hydrophobic-aromatic"};
+		for(String sc: three_class)
+		{
+			detect(ADomain.NRPS2_THREE_CLUSTER, sc, encW);
+		}
+		
+		// large cluster predictions
+		//String large_cluster[] = {"phe,trp,phg,tyr,bht","ser,thr,dhpg,hpg","gly,ala,val,leu,ile,abu,iva","asp,asn,glu,gln,aad","cys","orn,lys,arg","pro,pip","dhb,sal"}; 
+		
+		for(String sc: large_cluster)
+		{
+			detect(ADomain.NRPS2_LARGE_CLUSTER, sc, encW);
+		}
+		
+		// small cluster predictions
+		//String small_cluster[] = {"aad","val,leu,ile,abu,iva","arg","asp,asn","cys","dhb,sal","glu,gln","orn,horn","tyr,bht","pro","ser","dhpg,hpg","phe,trp","gly,ala","thr"}; 
+		for(String sc: small_cluster)
+		{			
+			detect(ADomain.NRPS2_SMALL_CLUSTER, sc, encW);
 		}
 		
 		// single aa predictions
 		String single_cluster[] = {"aad","ala","arg","asn","asp","bht","cys","dhb","dhpg","gln","glu","gly","hpg","ile","iva","leu","lys","orn","phe","pip","pro","ser","thr","trp","tyr","val"}; 
 		for(String sc: single_cluster)
 		{
-			detect("single", sc);
+			detect(ADomain.NRPS2_SINGLE_CLUSTER, sc, encW);
 		}
+		
+		detectStachNN();
 	}
 	
 	public static void checkAD(String model) throws IOException
 	{
-		svm_model m = svm.svm_load_model(modeldir+String.format("/%s_1class.mdl",model));
+		svm_model m = svm.svm_load_model(datadir+String.format("/models/%s_1class.mdl",model));
 		
 		PrimalWoldEncoder enc = new PrimalWoldEncoder();
 		
@@ -296,10 +431,10 @@ public class NRPSpredictor2
 		precs.put("val",0.826);
 	}
 	
-	public static void detect(String type, String label) throws MalformedURLException, ParseException
+	public static void detect(String type, String label, PrimalEncoder enc) throws MalformedURLException, ParseException
 	{
-		SVMLightModel m = SVMLightModel.readSVMLightModelFromURL(new URL(String.format("file:///%s/%s/[%s].mdl",modeldir,type,label)));
-		PrimalWoldEncoder enc = new PrimalWoldEncoder();
+		SVMLightModel m = SVMLightModel.readSVMLightModelFromURL(new URL(String.format("file:///%s/models/%s/[%s].mdl",datadir,type,label)));
+		
 		for(ADomain ad: adoms)
 		{
 			double fv[] = enc.encode(ad.sig8a);
@@ -312,6 +447,40 @@ public class NRPSpredictor2
 					ad.addDetection(type, label, yp, 0.0);
 			}
 		}
+	}
+	
+	public static void detectStachNN()
+	{
+		for(ADomain ad: adoms)
+		{
+			String[] hitspec = new String[1];
+			double sim = nearestSignature(ad, hitspec);
+			ad.addDetection(ADomain.NRPS2_STACH_NN, hitspec[0], sim);
+		}
+	}
+	
+	public static double nearestSignature(ADomain ad, String[] hit)
+	{
+		String a_sig   = ad.sigstach;
+		int maxMatches = 0;
+		int idx = 0;
+		
+		for(String sig: sigstach)
+		{
+			int matches = 0;
+			for(int i=0;i<sig.length();i++)
+			{
+				if(sig.charAt(i)==a_sig.charAt(i))
+					matches++;
+			}
+			if(matches>maxMatches)
+			{
+				maxMatches = matches;
+				hit[0] = specs.get(idx); 
+			}
+			idx++;
+		}
+		return (1.0*maxMatches)/(a_sig.length());
 	}
 	
 
@@ -352,7 +521,8 @@ public class NRPSpredictor2
 	public static void parseCommandline(String[] argv)
 	{
 		fillPrecs();
-		Getopt g = new Getopt("NRPSpredictor2", argv, "i:o:b:s:");
+		
+		Getopt g = new Getopt("NRPSpredictor2", argv, "i:o:b:s:r:");
 		//
 		int c;
 		String arg;
@@ -381,6 +551,11 @@ public class NRPSpredictor2
 				inputfile = arg;
 				break;
 				//
+			case 'r':
+				arg = g.getOptarg();
+				reportfile = arg;
+				break;
+				//				
 			case 'o':
 				arg = g.getOptarg();
 				outputfile = arg;

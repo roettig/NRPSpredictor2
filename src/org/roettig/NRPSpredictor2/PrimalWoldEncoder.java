@@ -1,7 +1,7 @@
 package org.roettig.NRPSpredictor2;
 
 
-public class PrimalWoldEncoder
+public class PrimalWoldEncoder implements PrimalEncoder
 {
 
 	private static double[] Z1 = new double[26];
