@@ -33,45 +33,52 @@ public class NRPSpredictor2
 	
 	public static void main(String[] argv) throws Exception
 	{
-		datadir = System.getProperty("datadir",datadir);
-		
-		if(argv.length==0)
+		try
 		{
-			System.out.println("Usage: NRPSPredictor2 -i <inputfile> -r <reportfile> -s [0|1 use signatures?]\n");
+			datadir = System.getProperty("datadir",datadir);
+
+			if(argv.length==0)
+			{
+				System.out.println("Usage: NRPSPredictor2 -i <inputfile> -r <reportfile> -s [0|1 use signatures?]\n");
+				System.exit(0);
+			}
+
+			initSigDB();
+
+			parseCommandline(argv);
+
+			banner();
+
+			if(useNRPS1input)
+			{
+				System.out.println("## using NRPS1 input");
+				parseNRPS1(inputfile);
+			}
+			else
+			{
+				System.out.println("## using signature input");
+				parseSigs(inputfile);
+			}
+
+			System.out.println("## start predicting on "+adoms.size()+" signatures");
+
+			// we now have a list of adomain objects
+			if(bacterialMode)
+				bacterialPrediction();
+			else
+				fungalPrediction();
+
+			// export annotated adomains
+
+			if(outputfile!=null)
+				store(outputfile,adoms);
+			if(reportfile!=null)
+				report(reportfile,adoms);
+		}
+		catch(Throwable e)
+		{
 			System.exit(1);
 		}
-		
-		initSigDB();
-		
-		parseCommandline(argv);
-		
-		banner();
-		
-		if(useNRPS1input)
-		{
-			System.out.println("## using NRPS1 input");
-			parseNRPS1(inputfile);
-		}
-		else
-		{
-			System.out.println("## using signature input");
-			parseSigs(inputfile);
-		}
-		
-		System.out.println("## start predicting on "+adoms.size()+" signatues");
-		
-		// we now have a list of adomain objects
-		if(bacterialMode)
-			bacterialPrediction();
-		else
-			fungalPrediction();
-		
-		// export annotated adomains
-		
-		if(outputfile!=null)
-			store(outputfile,adoms);
-		if(reportfile!=null)
-			report(reportfile,adoms);
 	}
 	
 	public static void banner()
@@ -147,6 +154,67 @@ public class NRPSpredictor2
 		System.exit(1);
 	}
 
+	public static String fixLabel(String lab)
+	{
+		
+		// large cluster predictions
+		//String large_cluster[] = {"phe,trp,phg,tyr,bht","ser,thr,dhpg,hpg","gly,ala,val,leu,ile,abu,iva","asp,asn,glu,gln,aad","cys","orn,lys,arg","pro,pip","dhb,sal"}; 
+	
+		// small cluster predictions
+		//String small_cluster[] = {"aad","val,leu,ile,abu,iva","arg","asp,asn","cys","dhb,sal","glu,gln","orn,horn","tyr,bht","pro","ser","dhpg,hpg","phe,trp","gly,ala","thr"};	 
+
+		
+		String ret = "N/A";
+		if(lab.equals("phe=trp=phg=tyr=bht"))
+			ret = "phe,trp,phg,tyr,bht";
+		if(lab.equals("ser=thr=ser-thr=dht=dhpg=dpg=hpg"))
+			ret = "ser,thr,dhpg,hpg";
+		if(lab.equals("gly=ala=val=leu=ile=abu=iva"))
+			ret = "gly,ala,val,leu,ile,abu,iva";
+		if(lab.equals("asp=asn=glu=gln=aad"))
+			ret = "asp,asn,glu,gln,aad";
+		if(lab.equals("cys"))
+			ret = "cys";
+		if(lab.equals("orn=lys=arg"))
+			ret = "orn,lys,arg";
+		if(lab.equals("pro=pip"))
+			ret = "pro,pip";
+		if(lab.equals("dhb=sal"))
+			ret = "dhb,sal";
+		
+		if(lab.equals("aaf"))
+			ret = "aad";
+		if(lab.equals("val=leu=ile=abu=iva"))
+			ret = "val,leu,ile,abu,iva";
+		if(lab.equals("arg"))
+			ret = "arg";		
+		if(lab.equals("asp=asn"))
+			ret = "asp,asn";
+		if(lab.equals("cys"))
+			ret = "cys";
+		if(lab.equals("dhb=sal"))
+			ret = "dhb,sal";
+		if(lab.equals("glu=gln"))
+			ret = "glu,gln";
+		if(lab.equals("orn"))
+			ret = "orn,horn";		
+		if(lab.equals("tyr=bht"))
+			ret = "tyr,bht";		
+		if(lab.equals("pro"))
+			ret = "pro";		
+		if(lab.equals("ser"))
+			ret = "ser";		
+		if(lab.equals("dhpg=dpg=hpg"))
+			ret = "dhpg,hpg";		
+		if(lab.equals("phe=trp"))
+			ret = "phe,trp";
+		if(lab.equals("gly=ala"))
+			ret = "gly,ala";		
+		if(lab.equals("thr=dht"))
+			ret = "thr,dht";		
+		return ret;
+	}
+	
 	public static void parseNRPS1(String filename) throws Exception
 	{
 		BufferedReader br = new BufferedReader(new FileReader(filename));
@@ -189,7 +257,11 @@ public class NRPSpredictor2
 						continue;
 					}
 					String toks[] = line.split(":");
-					cur_adom.addDetection("nrps1_lc", toks[0], Double.parseDouble(toks[1]));
+					String label = fixLabel(toks[0]);
+					if(precsNRPS1.containsKey(label))
+						cur_adom.addDetection(ADomain.NRPS1_LARGE_CLUSTER, toks[0], Double.parseDouble(toks[1]),precsNRPS1.get(label));
+					else
+						cur_adom.addDetection(ADomain.NRPS1_LARGE_CLUSTER, toks[0], Double.parseDouble(toks[1]),0.0);
 				}
 				while((line = br.readLine())!=null)
 				{
@@ -200,7 +272,12 @@ public class NRPSpredictor2
 						continue;
 					}
 					String toks[] = line.split(":");
-					cur_adom.addDetection("nrps1_sc", toks[0], Double.parseDouble(toks[1]));
+					String label = fixLabel(toks[0]);
+					if(precsNRPS1.containsKey(label))
+						cur_adom.addDetection(ADomain.NRPS1_SMALL_CLUSTER, toks[0], Double.parseDouble(toks[1]),precsNRPS1.get(label));
+					else
+						cur_adom.addDetection(ADomain.NRPS1_SMALL_CLUSTER, toks[0], Double.parseDouble(toks[1]),0.0);
+					//cur_adom.addDetection(ADomain.NRPS1_SMALL_CLUSTER, toks[0], Double.parseDouble(toks[1]));
 				}
 				continue;
 			}
@@ -306,23 +383,28 @@ public class NRPSpredictor2
 		
 		// large cluster predictions
 		String large_cluster[] = {"phe,trp,phg,tyr,bht","ser,thr,dhpg,hpg","gly,ala,val,leu,ile,abu,iva","asp,asn,glu,gln,aad","cys","orn,lys,arg","pro,pip","dhb,sal"}; 
-		
-		for(String sc: large_cluster)
-		{
-			detect(ADomain.NRPS1_LARGE_CLUSTER, sc, encR);
-		}
-		
+	
 		// small cluster predictions
-		String small_cluster[] = {"aad","val,leu,ile,abu,iva","arg","asp,asn","cys","dhb,sal","glu,gln","orn,horn","tyr,bht","pro","ser","dhpg,hpg","phe,trp","gly,ala","thr"}; 
-		for(String sc: small_cluster)
-		{			
-			detect(ADomain.NRPS1_SMALL_CLUSTER, sc, encR);
-		}
+		String small_cluster[] = {"aad","val,leu,ile,abu,iva","arg","asp,asn","cys","dhb,sal","glu,gln","orn,horn","tyr,bht","pro","ser","dhpg,hpg","phe,trp","gly,ala","thr"};	 
+	
 		
+		if(!useNRPS1input)
+		{
+			for(String sc: large_cluster)
+			{
+				detect(ADomain.NRPS1_LARGE_CLUSTER, sc, encR);
+			}
+
+			for(String sc: small_cluster)
+			{			
+				detect(ADomain.NRPS1_SMALL_CLUSTER, sc, encR);
+			}
+		}
 		
 		//////////
 		// NRPS2 
 		/////////
+	
 		
 		PrimalEncoder encW = new PrimalWoldEncoder();
 		
@@ -377,58 +459,89 @@ public class NRPSpredictor2
 		
 	}
 	
-	public static Map<String,Double> precs = new HashMap<String,Double>();
+	public static Map<String,Double> precs      = new HashMap<String,Double>();
+	public static Map<String,Double> precsNRPS1 = new HashMap<String,Double>();
 	
 	public static void fillPrecs()
 	{
-		String three_class[] = {"hydrophilic","hydrophobic-aliphatic","hydrophobic-aromatic"};
-		String large_cluster[] = {"phe,trp,phg,tyr,bht","ser,thr,dhpg,hpg","gly,ala,val,leu,ile,abu,iva","asp,asn,glu,gln,aad","cys","orn,lys,arg","pro,pip","dhb,sal"};
-		String small_cluster[] = {"aad","val,leu,ile,abu,iva","arg","asp,asn","cys","dhb,sal","glu,gln","orn,horn","tyr,bht","pro","ser","dhpg,hpg","phe,trp","gly,ala","thr"};
+		String three_class[]    = {"hydrophilic","hydrophobic-aliphatic","hydrophobic-aromatic"};
+		String large_cluster[]  = {"phe,trp,phg,tyr,bht","ser,thr,dhpg,hpg","gly,ala,val,leu,ile,abu,iva","asp,asn,glu,gln,aad","cys","orn,lys,arg","pro,pip","dhb,sal"};
+		String small_cluster[]  = {"aad","val,leu,ile,abu,iva","arg","asp,asn","cys","dhb,sal","glu,gln","orn,horn","tyr,bht","pro","ser","dhpg,hpg","phe,trp","gly,ala","thr"};
 		String single_cluster[] = {"aad","ala","arg","asn","asp","bht","cys","dhb","dhpg","gln","glu","gly","hpg","ile","iva","leu","lys","orn","phe","pip","pro","ser","thr","trp","tyr","val"};
-		precs.put("hydrophilic",0.963);
-		precs.put("hydrophobic-aliphatic",0.954);
-		precs.put("hydrophobic-aromatic",0.973);
-		precs.put("phe,trp,phg,tyr,bht", 0.978);
-		precs.put("ser,thr,dhpg,hpg", 0.970 );
-		precs.put("gly,ala,val,leu,ile,abu,iva",0.956 );
-		precs.put("asp,asn,glu,gln,aad", 0.956);
-		precs.put("cys", 0.996);
-		precs.put("orn,lys,arg", 0.984);
-		precs.put("pro,pip", 0.994);
+		
+		precs.put("hydrophilic",0.940);
+		precs.put("hydrophobic-aliphatic",0.974);
+		precs.put("hydrophobic-aromatic",0.890);
+		
+		precs.put("phe,trp,phg,tyr,bht", 0.881);
+		precs.put("ser,thr,dhpg,hpg", 0.967 );
+		precs.put("gly,ala,val,leu,ile,abu,iva",0.947 );
+		precs.put("asp,asn,glu,gln,aad", 0.969);
+		precs.put("cys", 0.975);
+		precs.put("orn,lys,arg", 0.898);
+		precs.put("pro,pip", 0.867);
 		precs.put("dhb,sal", 1.00);
+		
 		precs.put("aad",1.00 );
-		precs.put("val,leu,ile,abu,iva", 0.979);
-		precs.put("arg",0.994 );
-		precs.put("asp,asn", 0.996);
-		precs.put("cys", 0.996);
+		precs.put("val,leu,ile,abu,iva", 0.892);
+		precs.put("arg",1.00 );
+		precs.put("asp,asn", 0.969);
+		precs.put("cys", 0.983);
 		precs.put("dhb,sal", 1.000);
-		precs.put("glu,gln", 0.967);
-		precs.put("orn,horn",0.994 );
-		precs.put("tyr,bht", 0.958);
-		precs.put("pro", 0.996);
-		precs.put("ser", 0.998);
+		precs.put("glu,gln", 0.85);
+		precs.put("orn,horn",0.900 );
+		precs.put("tyr,bht", 0.892);
+		precs.put("pro", 0.938);
+		precs.put("ser", 1.0);
 		precs.put("dhpg,hpg", 1.000);
-		precs.put("phe,trp", 0.894);
-		precs.put("gly,ala", 0.973);
-		precs.put("thr", 1.000);
-		precs.put("ala",0.968);
-		precs.put("asn",1.000);
-		precs.put("asp",0.898);
-		precs.put("bht",0.828);
-		precs.put("dhb",0.962);
-		precs.put("dhpg",0.996);
-		precs.put("gln",0.870);
-		precs.put("glu",0.991);
-		precs.put("gly",0.998);
-		precs.put("hpg",0.969);
-		precs.put("ile",0.871);
-		precs.put("iva",0.778);
+		precs.put("phe,trp", 0.608);
+		precs.put("gly,ala", 0.938);
+		precs.put("thr", 0.978);
+		
+		precs.put("ala",0.901);
+		precs.put("asn",0.934);
+		precs.put("asp",0.700);
+		precs.put("bht",0.782);
+		precs.put("dhb",1.00);
+		precs.put("dhpg",0.967);
+		precs.put("gln",0.775);
+		precs.put("glu",0.760);
+		precs.put("gly",0.902);
+		precs.put("hpg",1.0);
+		precs.put("ile",1.0);
+		precs.put("iva",0.933);
 		precs.put("leu",0.957);
-		precs.put("lys",0.996);
-		precs.put("phe",0.852);
-		precs.put("trp",0.496);
-		precs.put("tyr",0.721);
-		precs.put("val",0.826);
+		precs.put("lys",0.500);
+		precs.put("phe",0.740);
+		precs.put("trp",0.400);
+		precs.put("tyr",0.671);
+		precs.put("val",0.801);
+		
+		precsNRPS1.put("phe,trp,phg,tyr,bht", 0.881);
+		precsNRPS1.put("ser,thr,dhpg,hpg", 0.963 );
+		precsNRPS1.put("gly,ala,val,leu,ile,abu,iva",0.940);
+		precsNRPS1.put("asp,asn,glu,gln,aad", 0.969);
+		precsNRPS1.put("cys", 0.958);
+		precsNRPS1.put("orn,lys,arg", 0.898);
+		precsNRPS1.put("pro,pip", 0.811);
+		precsNRPS1.put("dhb,sal", 1.00);
+		
+		precsNRPS1.put("aad",1.00 );
+		precsNRPS1.put("val,leu,ile,abu,iva", 0.90);
+		precsNRPS1.put("arg",1.00 );
+		precsNRPS1.put("asp,asn", 0.969);
+		precsNRPS1.put("cys", 1.00);
+		precsNRPS1.put("dhb,sal", 1.000);
+		precsNRPS1.put("glu,gln", 0.86);
+		precsNRPS1.put("orn,horn",0.80 );
+		precsNRPS1.put("tyr,bht", 0.825);
+		precsNRPS1.put("pro", 0.900);
+		precsNRPS1.put("ser", 0.936);
+		precsNRPS1.put("thr", 0.942);
+		precsNRPS1.put("dhpg,hpg", 0.985);
+		precsNRPS1.put("phe,trp", 0.671);
+		precsNRPS1.put("gly,ala", 0.859);
+		precsNRPS1.put("thr,dht", 0.942);
 	}
 	
 	public static void detect(String type, String label, PrimalEncoder enc) throws MalformedURLException, ParseException
@@ -441,10 +554,20 @@ public class NRPSpredictor2
 			double yp = m.classify(makeFVec(fv));
 			if(yp>0.0)
 			{
-				if(precs.containsKey(label))
-					ad.addDetection(type, label, yp, precs.get(label));
+				if(type.contains("NRPS2"))
+				{
+					if(precs.containsKey(label))
+						ad.addDetection(type, label, yp, precs.get(label));
+					else
+						ad.addDetection(type, label, yp, 0.0);
+				}
 				else
-					ad.addDetection(type, label, yp, 0.0);
+				{
+					if(precsNRPS1.containsKey(label))
+						ad.addDetection(type, label, yp, precsNRPS1.get(label));
+					else
+						ad.addDetection(type, label, yp, 0.0);
+				}
 			}
 		}
 	}
