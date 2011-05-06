@@ -22,8 +22,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import jnisvmlight.FeatureVector;
-import jnisvmlight.SVMLightModel;
+import org.roettig.NRPSpredictor2.svm.FeatureVector;
+import org.roettig.NRPSpredictor2.svm.SVMlightModel;
+
 import libsvm.svm;
 import libsvm.svm_model;
 import libsvm.svm_node;
@@ -43,6 +44,7 @@ public class NRPSpredictor2
 				System.exit(0);
 			}
 
+			
 			initSigDB();
 
 			parseCommandline(argv);
@@ -59,14 +61,21 @@ public class NRPSpredictor2
 				System.out.println("## using signature input");
 				parseSigs(inputfile);
 			}
+			
 
 			System.out.println("## start predicting on "+adoms.size()+" signatures");
 
 			// we now have a list of adomain objects
 			if(bacterialMode)
+			{
+				System.out.println("## bacterial mode");
 				bacterialPrediction();
+			}
 			else
+			{
+				System.out.println("## fungal mode");
 				fungalPrediction();
+			}
 
 			// export annotated adomains
 
@@ -77,6 +86,7 @@ public class NRPSpredictor2
 		}
 		catch(Throwable e)
 		{
+			e.printStackTrace();
 			System.exit(1);
 		}
 	}
@@ -84,9 +94,9 @@ public class NRPSpredictor2
 	public static void banner()
 	{
 		System.out.println("\n");
-		System.out.println(" ##        Welcome to NRPSpredictor2 by       ##");
-		System.out.println(" ##    Marc Röttig, Marnix Medema, Kai Blin   ##");
-		System.out.println(" ##     based on work by Christian Rausch     ##\n");
+		System.out.println(" ##        Welcome to NRPSpredictor2 by        ##");
+		System.out.println(" ##    Marc Roettig, Marnix Medema, Kai Blin   ##");
+		System.out.println(" ##     based on work by Christian Rausch      ##\n");
 		System.out.println(" please cite: http://dx.doi.org/10.1093/nar/gki885");
 		System.out.println(" please cite: <hopefully NARW paper here>\n\n");
 	}
@@ -222,13 +232,50 @@ public class NRPSpredictor2
 		ADomain cur_adom = null;
 		while ((line = br.readLine()) != null)   
 		{
+			if(line.startsWith("[no hits above thresholds]"))
+			{
+				cur_adom = null;
+			}
+			if(line.startsWith("Score: "))
+			{
+				String scoreline = line.substring(6).trim();
+				double score = 0;
+				try
+				{
+					score = Double.parseDouble(scoreline);
+				}
+				catch(Exception e)
+				{
+					
+				}
+				cur_adom.pfamscore = score;
+			}
+			if(line.startsWith("Loc: "))
+			{
+				String locsline = line.substring(4).trim();
+				String[] locs = locsline.split("_");
+				
+				int start = -1;
+				int end   = -1;
+				try
+				{
+					start = Integer.parseInt(locs[0]);
+					end   = Integer.parseInt(locs[1]);
+				}
+				catch(Exception e)
+				{
+					
+				}
+				cur_adom.startPos = start;
+				cur_adom.endPos   = end;
+			}
 			if(line.startsWith("Modul: "))
 			{
 				if(cur_adom!=null)
 					adoms.add(cur_adom);
 				cur_adom = new ADomain();
-				String toks[] = line.split(":");
-				String sid = toks[1].trim();
+
+				String sid = line.substring(7).trim();
 				cur_adom.sid = sid;
 				continue;
 			}
@@ -283,7 +330,10 @@ public class NRPSpredictor2
 			}
 			
 		}
-		adoms.add(cur_adom);
+		
+		if(cur_adom!=null)
+			adoms.add(cur_adom);
+		
 		br.close();
 		
 		//store(outputdir+"/preds",adoms);
@@ -313,8 +363,10 @@ public class NRPSpredictor2
 	
 	
 	private static List<String> specs     = new ArrayList<String>();
+	private static List<String> specs_fungal = new ArrayList<String>();
 	private static List<String> sig8a     = new ArrayList<String>();
 	private static List<String> sigstach = new ArrayList<String>();
+	private static List<String> sigstach_fungal = new ArrayList<String>();
 	
 	private static void initSigDB() throws IOException
 	{
@@ -328,6 +380,16 @@ public class NRPSpredictor2
 			sigstach.add(toks[2]);
 		}
 		in.close();
+		
+		in = new BufferedReader(new FileReader(datadir+"/fungal_labeled_sigs"));
+		line = "";
+		while((line=in.readLine())!=null)
+		{
+			String toks[] = line.split("\\\t");
+			specs_fungal.add(toks[0]);
+			sigstach_fungal.add(toks[2]);
+		}
+		in.close();
 	}
 	
 	
@@ -335,9 +397,10 @@ public class NRPSpredictor2
 	private static void report(String outputfile, List<ADomain> adoms) throws FileNotFoundException
 	{
 		PrintWriter out = new PrintWriter( new File(reportfile) );
+		out.println(String.format("#%s<tab>%s<tab>%s<tab>%s<tab>%s<tab>%s<tab>%s<tab>%s<tab>%s<tab>%s<tab>%s<tab>%s<tab>%s","sequence-id","8A-signature","stachelhaus-code","3class-pred","large-class-pred","small-class-pred","single-class-pred","nearest stachelhaus code","NRPS1pred-large-class-pred","NRPS2pred-large-class-pred","outside applicability domain?","coords","pfam-score"));
 		for(ADomain adom: adoms)
 		{
-			// id <tab> 8a_sig <tab> stachelhaus_sig <tab> three_class_prediction_nrps2 <tab> large_cluster_prediction_nrps2 <tab> small_cluster_prediction_nrps2 <tab> single_aa_prediction_nrps2 <tab> nearest_stachelhaus_specificity <tab> large_cluster_prediction_nrps1 <tab> small_cluster_prediction_nrps1 <tab> isAdomainUnusual?
+			// id <tab> 8a_sig <tab> stachelhaus_sig <tab> three_class_prediction_nrps2 <tab> large_cluster_prediction_nrps2 <tab> small_cluster_prediction_nrps2 <tab> single_aa_prediction_nrps2 <tab> nearest_stachelhaus_specificity <tab> large_cluster_prediction_nrps1 <tab> small_cluster_prediction_nrps1 <tab> isAdomainUnusual? <tab> coords <pfam-score>
 			
 			Detection best_THREE_CLASS = adom.getBestDetection(ADomain.NRPS2_THREE_CLUSTER);
 			String pred_THREE_CLASS = (best_THREE_CLASS!=null?best_THREE_CLASS.getLabel():"N/A");
@@ -360,14 +423,124 @@ public class NRPSpredictor2
 			Detection best_SMALL_CLASS1 = adom.getBestDetection(ADomain.NRPS1_SMALL_CLUSTER);
 			String pred_SMALL_CLASS1 = (best_SMALL_CLASS1!=null?best_SMALL_CLASS1.getLabel():"N/A");
 			
-			out.println(String.format("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%d",adom.sid,adom.sig8a,adom.sigstach, pred_THREE_CLASS, pred_LARGE_CLASS, pred_SMALL_CLASS, pred_SINGLE_CLASS, pred_STACH_NN, pred_LARGE_CLASS1, pred_SMALL_CLASS1 ,(adom.isOutlier()?1:0)));
+			out.println(String.format("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%d\t%s\t%e",adom.sid,adom.sig8a,adom.sigstach, pred_THREE_CLASS, pred_LARGE_CLASS, pred_SMALL_CLASS, pred_SINGLE_CLASS, pred_STACH_NN, pred_LARGE_CLASS1, pred_SMALL_CLASS1 ,(adom.isOutlier()?1:0),String.format("%d:%d",adom.startPos,adom.endPos),adom.pfamscore));
 		}
 		out.close();
 	}
 
-	public static void fungalPrediction() throws MalformedURLException, ParseException
+	/*
+	public static void fungalPrediction() throws ParseException, IOException
 	{	
+		PrimalEncoder encR = new PrimalRauschEncoder();
 		
+		// check applicability domain
+		// checkAD("fungal");
+		
+		//////////
+		// NRPS1
+		/////////
+		
+		// large cluster predictions
+		String large_cluster[] = {"phe,trp,phg,tyr,bht","ser,thr,dhpg,hpg","gly,ala,val,leu,ile,abu,iva","asp,asn,glu,gln,aad","cys","orn,lys,arg","pro,pip","dhb,sal"}; 
+	
+		// small cluster predictions
+		String small_cluster[] = {"aad","val,leu,ile,abu,iva","arg","asp,asn","cys","dhb,sal","glu,gln","orn,horn","tyr,bht","pro","ser","dhpg,hpg","phe,trp","gly,ala","thr"};	 
+	
+		
+		if(!useNRPS1input)
+		{
+			for(String sc: large_cluster)
+			{
+				detect(ADomain.NRPS1_LARGE_CLUSTER, sc, encR);
+			}
+
+			for(String sc: small_cluster)
+			{			
+				detect(ADomain.NRPS1_SMALL_CLUSTER, sc, encR);
+			}
+		}
+		
+		PrimalEncoder encW = new PrimalWoldEncoder();
+		
+		// 3 class predictions
+		String three_class[] = {"hydrophilic","hydrophobic-aliphatic","hydrophobic-aromatic"};
+		for(String sc: three_class)
+		{
+			detect(ADomain.NRPS2_THREE_CLUSTER_FUNGAL, sc, encW);
+		}
+		
+		detectStachNN(false);
+	}
+	*/
+	
+	public static void fungalPrediction() throws ParseException, IOException
+	{	
+		PrimalEncoder encR = new PrimalRauschEncoder();
+		
+		// check applicability domain
+		//checkAD("bacterial");
+		
+		//////////
+		// NRPS1
+		/////////
+		
+		// large cluster predictions
+		String large_cluster[] = {"phe,trp,phg,tyr,bht","ser,thr,dhpg,hpg","gly,ala,val,leu,ile,abu,iva","asp,asn,glu,gln,aad","cys","orn,lys,arg","pro,pip","dhb,sal"}; 
+	
+		// small cluster predictions
+		String small_cluster[] = {"aad","val,leu,ile,abu,iva","arg","asp,asn","cys","dhb,sal","glu,gln","orn,horn","tyr,bht","pro","ser","dhpg,hpg","phe,trp","gly,ala","thr"};	 
+	
+		
+		if(!useNRPS1input)
+		{
+			for(String sc: large_cluster)
+			{
+				detect(ADomain.NRPS1_LARGE_CLUSTER, sc, encR);
+			}
+
+			for(String sc: small_cluster)
+			{			
+				detect(ADomain.NRPS1_SMALL_CLUSTER, sc, encR);
+			}
+		}
+		
+		//////////
+		// NRPS2 
+		/////////
+	
+		
+		PrimalEncoder encW = new PrimalWoldEncoder();
+		
+		// 3 class predictions
+		String three_class[] = {"hydrophilic","hydrophobic-aliphatic","hydrophobic-aromatic"};
+		for(String sc: three_class)
+		{
+			detect(ADomain.NRPS2_THREE_CLUSTER, sc, encW);
+		}
+		
+		// large cluster predictions
+		//String large_cluster[] = {"phe,trp,phg,tyr,bht","ser,thr,dhpg,hpg","gly,ala,val,leu,ile,abu,iva","asp,asn,glu,gln,aad","cys","orn,lys,arg","pro,pip","dhb,sal"}; 
+		
+		for(String sc: large_cluster)
+		{
+			detect(ADomain.NRPS2_LARGE_CLUSTER, sc, encW);
+		}
+		
+		// small cluster predictions
+		//String small_cluster[] = {"aad","val,leu,ile,abu,iva","arg","asp,asn","cys","dhb,sal","glu,gln","orn,horn","tyr,bht","pro","ser","dhpg,hpg","phe,trp","gly,ala","thr"}; 
+		for(String sc: small_cluster)
+		{			
+			detect(ADomain.NRPS2_SMALL_CLUSTER, sc, encW);
+		}
+		
+		// single aa predictions
+		String single_cluster[] = {"aad","ala","arg","asn","asp","bht","cys","dhb","dhpg","gln","glu","gly","hpg","ile","iva","leu","lys","orn","phe","pip","pro","ser","thr","trp","tyr","val"}; 
+		for(String sc: single_cluster)
+		{
+			detect(ADomain.NRPS2_SINGLE_CLUSTER, sc, encW);
+		}
+		
+		detectStachNN(false);
 	}
 	
 	public static void bacterialPrediction() throws ParseException, IOException
@@ -437,7 +610,7 @@ public class NRPSpredictor2
 			detect(ADomain.NRPS2_SINGLE_CLUSTER, sc, encW);
 		}
 		
-		detectStachNN();
+		detectStachNN(true);
 	}
 	
 	public static void checkAD(String model) throws IOException
@@ -448,7 +621,7 @@ public class NRPSpredictor2
 		
 		for(ADomain ad: adoms)
 		{
-			double fv[] = enc.encode(ad.sig8a);
+			double fv[]  = enc.encode(ad.sig8a);
 			svm_node x[] = makeSVMnode(fv,1);
 			double yp = svm.svm_predict(m,x);
 			if(yp>=0.0)
@@ -544,14 +717,14 @@ public class NRPSpredictor2
 		precsNRPS1.put("thr,dht", 0.942);
 	}
 	
-	public static void detect(String type, String label, PrimalEncoder enc) throws MalformedURLException, ParseException
+	public static void detect(String type, String label, PrimalEncoder enc) throws ParseException, FileNotFoundException, IOException
 	{
-		SVMLightModel m = SVMLightModel.readSVMLightModelFromURL(new URL(String.format("file:///%s/models/%s/[%s].mdl",datadir,type,label)));
+		SVMlightModel m = new SVMlightModel(new FileInputStream(String.format("file:///%s/models/%s/[%s].mdl",datadir,type,label)));
 		
 		for(ADomain ad: adoms)
 		{
 			double fv[] = enc.encode(ad.sig8a);
-			double yp = m.classify(makeFVec(fv));
+			double yp   = m.predict(makeFVec(fv));
 			if(yp>0.0)
 			{
 				if(type.contains("NRPS2"))
@@ -572,23 +745,32 @@ public class NRPSpredictor2
 		}
 	}
 	
-	public static void detectStachNN()
+	public static void detectStachNN(boolean bacterial)
 	{
 		for(ADomain ad: adoms)
 		{
 			String[] hitspec = new String[1];
-			double sim = nearestSignature(ad, hitspec);
-			ad.addDetection(ADomain.NRPS2_STACH_NN, hitspec[0], sim);
+			double sim = nearestSignature(ad, hitspec, bacterial);
+			if(bacterial)
+				ad.addDetection(ADomain.NRPS2_STACH_NN, hitspec[0], sim);
+			else
+				ad.addDetection(ADomain.NRPS2_STACH_NN_FUNGAL, hitspec[0], sim);
 		}
 	}
 	
-	public static double nearestSignature(ADomain ad, String[] hit)
+	public static double nearestSignature(ADomain ad, String[] hit, boolean bacterial)
 	{
 		String a_sig   = ad.sigstach;
 		int maxMatches = 0;
 		int idx = 0;
 		
-		for(String sig: sigstach)
+		List<String> sigs;
+		if(bacterial)
+			sigs = sigstach;
+		else
+			sigs = sigstach_fungal;
+		
+		for(String sig: sigs)
 		{
 			int matches = 0;
 			for(int i=0;i<sig.length();i++)
@@ -625,20 +807,9 @@ public class NRPSpredictor2
 		return x;
 	}
 	
-	public static FeatureVector makeFVec(double fts[])
+	public static FeatureVector makeFVec(double[] fts)
 	{
-		int D = fts.length;
-		int[]    dims = new int[D];
-		double[] vals = new double[D];
-		for(int j=0;j<D;j++)
-		{
-			vals[j] = fts[j];
-			dims[j] = j+1;
-		}
-
-		FeatureVector ret = null;
-		ret = new FeatureVector(dims, vals);
-		return ret;
+		return new FeatureVector(fts);
 	}
 	
 	public static void parseCommandline(String[] argv)

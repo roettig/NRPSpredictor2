@@ -21,13 +21,18 @@ public class ADomain implements Serializable
 	public String sig8a;
 	public String sigstach;
 	public String spec;
+	public int startPos;
+	public int endPos;
+	public double pfamscore;
 	public boolean outlier;
 	
 	public static String NRPS2_THREE_CLUSTER  = "NRPS2_THREE_CLUSTER";
+	public static String NRPS2_THREE_CLUSTER_FUNGAL  = "NRPS2_THREE_CLUSTER_FUNGAL";
 	public static String NRPS2_LARGE_CLUSTER  = "NRPS2_LARGE_CLUSTER";
 	public static String NRPS2_SMALL_CLUSTER  = "NRPS2_SMALL_CLUSTER";
 	public static String NRPS2_SINGLE_CLUSTER = "NRPS2_SINGLE_CLUSTER";
 	public static String NRPS2_STACH_NN       = "NRPS2_STACH_NN";
+	public static String NRPS2_STACH_NN_FUNGAL= "NRPS2_STACH_NN_FUNGAL";
 	public static String NRPS1_LARGE_CLUSTER  = "NRPS1_LARGE_CLUSTER";
 	public static String NRPS1_SMALL_CLUSTER  = "NRPS1_SMALL_CLUSTER";
 	
@@ -165,6 +170,38 @@ public class ADomain implements Serializable
 		this.outlier = outlier;
 	}
 	
+	
+	
+	public int getStartPos()
+	{
+		return startPos;
+	}
+
+	public void setStartPos(int startPos)
+	{
+		this.startPos = startPos;
+	}
+
+	public int getEndPos()
+	{
+		return endPos;
+	}
+
+	public void setEndPos(int endPos)
+	{
+		this.endPos = endPos;
+	}
+
+	public double getPfamscore()
+	{
+		return pfamscore;
+	}
+
+	public void setPfamscore(double pfamscore)
+	{
+		this.pfamscore = pfamscore;
+	}
+
 	public static void main(String[] args)
 	{
 		ADomain ad = new ADomain();
