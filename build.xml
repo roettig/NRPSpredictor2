@@ -10,7 +10,7 @@
  </target>
 	
  <target name="build" depends="compile">
-	  <jar jarfile="build/NRPSPredictor2.jar" basedir="bin"/>
+	  <jar jarfile="build/NRPSpredictor2.jar" basedir="bin"/>
  </target>
 	
  <target name="clean">
