@@ -1,0 +1,15 @@
+<project name="NRPSpredictor2" default="build" basedir=".">
+
+ <target name="prepare">
+      <mkdir dir="build"/>
+ </target>
+	
+ <target name="compile">
+      <javac srcdir="src/" destdir="bin/" includeantruntime="false"/>
+ </target>
+	
+ <target name="build" depends="compile,prepare">
+	  <jar jarfile="build/NRPSPredictor2.jar" basedir="bin"/>
+ </target>
+	
+</project>	

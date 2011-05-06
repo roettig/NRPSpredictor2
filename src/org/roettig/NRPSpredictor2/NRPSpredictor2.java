@@ -14,8 +14,6 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -98,7 +96,7 @@ public class NRPSpredictor2
 		System.out.println(" ##    Marc Roettig, Marnix Medema, Kai Blin   ##");
 		System.out.println(" ##     based on work by Christian Rausch      ##\n");
 		System.out.println(" please cite: http://dx.doi.org/10.1093/nar/gki885");
-		System.out.println(" please cite: <hopefully NARW paper here>\n\n");
+		System.out.println(" please cite: http://dx.doi.org/10.1093/nar/gkr323\n\n");
 	}
 	
 	private static boolean useNRPS1input  = false;
@@ -106,7 +104,7 @@ public class NRPSpredictor2
 	private static String inputfile;
 	private static String outputfile;
 	private static String reportfile;
-	private static String datadir = "/home/roettig/coops/nrps2/models";
+	private static String datadir;
 	
 	private static List<ADomain> adoms = new ArrayList<ADomain>();
 	
@@ -427,51 +425,6 @@ public class NRPSpredictor2
 		}
 		out.close();
 	}
-
-	/*
-	public static void fungalPrediction() throws ParseException, IOException
-	{	
-		PrimalEncoder encR = new PrimalRauschEncoder();
-		
-		// check applicability domain
-		// checkAD("fungal");
-		
-		//////////
-		// NRPS1
-		/////////
-		
-		// large cluster predictions
-		String large_cluster[] = {"phe,trp,phg,tyr,bht","ser,thr,dhpg,hpg","gly,ala,val,leu,ile,abu,iva","asp,asn,glu,gln,aad","cys","orn,lys,arg","pro,pip","dhb,sal"}; 
-	
-		// small cluster predictions
-		String small_cluster[] = {"aad","val,leu,ile,abu,iva","arg","asp,asn","cys","dhb,sal","glu,gln","orn,horn","tyr,bht","pro","ser","dhpg,hpg","phe,trp","gly,ala","thr"};	 
-	
-		
-		if(!useNRPS1input)
-		{
-			for(String sc: large_cluster)
-			{
-				detect(ADomain.NRPS1_LARGE_CLUSTER, sc, encR);
-			}
-
-			for(String sc: small_cluster)
-			{			
-				detect(ADomain.NRPS1_SMALL_CLUSTER, sc, encR);
-			}
-		}
-		
-		PrimalEncoder encW = new PrimalWoldEncoder();
-		
-		// 3 class predictions
-		String three_class[] = {"hydrophilic","hydrophobic-aliphatic","hydrophobic-aromatic"};
-		for(String sc: three_class)
-		{
-			detect(ADomain.NRPS2_THREE_CLUSTER_FUNGAL, sc, encW);
-		}
-		
-		detectStachNN(false);
-	}
-	*/
 	
 	public static void fungalPrediction() throws ParseException, IOException
 	{	
@@ -719,7 +672,7 @@ public class NRPSpredictor2
 	
 	public static void detect(String type, String label, PrimalEncoder enc) throws ParseException, FileNotFoundException, IOException
 	{
-		SVMlightModel m = new SVMlightModel(new FileInputStream(String.format("file:///%s/models/%s/[%s].mdl",datadir,type,label)));
+		SVMlightModel m = new SVMlightModel(new FileInputStream(String.format("%s/models/%s/[%s].mdl",datadir,type,label)));
 		
 		for(ADomain ad: adoms)
 		{
