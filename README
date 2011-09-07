@@ -17,9 +17,10 @@ and the respective jar will be built and placed in the
 build directory.
 
 An exemplary shell script launching NRPSPredictor2 can
-be found in the root directory. This scipt file can be
+be found in the root directory. This script file can be
 adjusted if you wish to place some files to different
-locations (jars or model files).
+locations (jars or model files) or use absolute path 
+names.
 
 
 Example usage:
