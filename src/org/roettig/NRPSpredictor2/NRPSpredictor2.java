@@ -18,10 +18,17 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
+import org.roettig.NRPSpredictor2.hmmer.HMMPfam;
+import org.roettig.NRPSpredictor2.hmmer.HMMPfamParser.DomainAlignment;
+import org.roettig.NRPSpredictor2.hmmer.HMMPfamParser.DomainHit;
+import org.roettig.NRPSpredictor2.hmmer.HMMPfamParser.QueryResult;
+import org.roettig.NRPSpredictor2.resources.ResourceManager;
 import org.roettig.NRPSpredictor2.svm.FeatureVector;
 import org.roettig.NRPSpredictor2.svm.SVMlightModel;
+import org.roettig.NRPSpredictor2.util.Helper;
 
 import libsvm.svm;
 import libsvm.svm_model;
@@ -32,13 +39,22 @@ public class NRPSpredictor2
 	
 	public static void main(String[] argv) throws Exception
 	{
+		
+		Locale locale = new Locale("en", "UK");
+		Locale.setDefault(locale);
+
 		try
 		{
 			datadir = System.getProperty("datadir",datadir);
 
 			if(argv.length==0)
 			{
+				banner();
+				System.out.println("");
 				System.out.println("Usage: NRPSPredictor2 -i <inputfile> -r <reportfile> -s [0|1 use signatures?]\n");
+				System.out.println("");
+				System.out.println("The inputfile can either be a flatfile with signatures or multi-fastafile with full sequences.");
+				System.out.println("An examplary signature file can be found in the examples directory");
 				System.exit(0);
 			}
 
@@ -49,10 +65,10 @@ public class NRPSpredictor2
 
 			banner();
 
-			if(useNRPS1input)
+			if(extractsigs)
 			{
-				System.out.println("## using NRPS1 input");
-				parseNRPS1(inputfile);
+				System.out.println("## extracting signatures from fasta file");
+				extractSigs(inputfile);
 			}
 			else
 			{
@@ -89,6 +105,59 @@ public class NRPSpredictor2
 		}
 	}
 	
+	private static void extractSigs(String infile) throws Exception
+	{
+		HMMPfam hmmpfam = new HMMPfam();
+		File model = Helper.deployFile(ResourceManager.class.getResourceAsStream("aa-activating.aroundLys.hmm"));
+		hmmpfam.run(0.00001, model, new File(infile));
+		List<QueryResult> res = hmmpfam.getResults();
+		
+		ADomain cur_adom = null;
+		
+		for(QueryResult qr : res)
+		{
+			List<DomainHit>       hits = qr.getHits();
+			List<DomainAlignment> alis = qr.getAlignments();
+			
+			int N = hits.size();
+			
+			for(int i=0;i<N;i+=2)
+			{
+				DomainAlignment adom     = alis.get(i);
+				DomainHit       adom_hit = hits.get(i);
+				
+				String a_topline  = adom.target;
+				String a_downline = adom.query;
+				
+				String l_topline  = "";
+				String l_downline = "";
+				
+				if((i+1)<alis.size())
+				{
+					DomainAlignment lys  = alis.get(i+1);
+					l_topline  = lys.target;
+					l_downline = lys.query;
+				}
+				
+				ADomSigExtractor e = new ADomSigExtractor();
+				e.setADomainTopline(a_topline);
+				e.setADomainDownline(a_downline);
+				e.setLysDomainTopline(l_topline);
+				e.setLysDomainDownline(l_downline);
+				e.run();
+
+				cur_adom = new ADomain();
+				cur_adom.sig8a    = e.get8ASignature();
+				cur_adom.sigstach = e.getStachelhausCode();
+				cur_adom.sid      = qr.getQueryId();
+				cur_adom.startPos = adom_hit.seqfrom;
+				cur_adom.endPos   = adom_hit.seqto;
+				cur_adom.pfamscore = adom_hit.score;
+				adoms.add(cur_adom);
+			}
+		}
+	}
+
 	public static void banner()
 	{
 		System.out.println("\n");
@@ -99,7 +168,7 @@ public class NRPSpredictor2
 		System.out.println(" please cite: http://dx.doi.org/10.1093/nar/gkr323\n\n");
 	}
 	
-	private static boolean useNRPS1input  = false;
+	private static boolean extractsigs    = false;
 	private static boolean bacterialMode  = true;
 	private static String inputfile;
 	private static String outputfile;
@@ -444,7 +513,7 @@ public class NRPSpredictor2
 		String small_cluster[] = {"aad","val,leu,ile,abu,iva","arg","asp,asn","cys","dhb,sal","glu,gln","orn,horn","tyr,bht","pro","ser","dhpg,hpg","phe,trp","gly,ala","thr"};	 
 	
 		
-		if(!useNRPS1input)
+		if(!extractsigs)
 		{
 			for(String sc: large_cluster)
 			{
@@ -514,7 +583,7 @@ public class NRPSpredictor2
 		String small_cluster[] = {"aad","val,leu,ile,abu,iva","arg","asp,asn","cys","dhb,sal","glu,gln","orn,horn","tyr,bht","pro","ser","dhpg,hpg","phe,trp","gly,ala","thr"};	 
 	
 		
-		if(!useNRPS1input)
+		if(!extractsigs)
 		{
 			for(String sc: large_cluster)
 			{
@@ -780,9 +849,9 @@ public class NRPSpredictor2
 			case 's':
 				arg = g.getOptarg();
 				if(arg.equals("1"))
-					useNRPS1input = false;
+					extractsigs = false;
 				else
-					useNRPS1input = true;
+					extractsigs = true;
 				break;
 				//
 			case 'b':
