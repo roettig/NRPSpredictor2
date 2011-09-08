@@ -9,6 +9,9 @@
 This package contains the NRPSPredictor2, a program to 
 predict adenylation domain specificity from sequence.
 
+The predictor currently runs on Linux and on the Mac OS
+platform.
+
 To build the NRPSPredictor2 please issue on the shell
 
 ant
