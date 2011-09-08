@@ -1,12 +1,12 @@
 <project name="NRPSpredictor2" default="build" basedir=".">
 
- <target name="prepare">
+ <target name="prepare" depends="clean">
  	  <mkdir dir="bin/"/>
       <mkdir dir="build/"/>
  </target>
 	
  <target name="compile" depends="prepare">
-      <javac srcdir="src/" destdir="bin/" includeantruntime="false">
+      <javac srcdir="src/" destdir="bin/" includeantruntime="false" debug="on" debuglevel="lines,vars,source">
       	<classpath>
       	    <fileset dir="lib">
       	     	<include name="*.jar"/>
@@ -16,6 +16,9 @@
  </target>
 	
  <target name="build" depends="compile">
+ 	  <copy file="src/org/roettig/NRPSPredictor2/hmmer/hmmpfam.macos64" todir="bin/org/roettig/NRPSPredictor2/hmmer"/>
+ 	  <copy file="src/org/roettig/NRPSPredictor2/hmmer/hmmpfam" todir="bin/org/roettig/NRPSPredictor2/hmmer"/>
+ 	  <copy file="src/org/roettig/NRPSPredictor2/resources/aa-activating.aroundLys.hmm" todir="bin/org/roettig/NRPSPredictor2/resources"/>
 	  <jar jarfile="build/NRPSpredictor2.jar" basedir="bin"/>
  </target>
 	
