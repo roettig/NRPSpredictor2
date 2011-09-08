@@ -16,9 +16,9 @@
  </target>
 	
  <target name="build" depends="compile">
- 	  <copy file="src/org/roettig/NRPSPredictor2/hmmer/hmmpfam.macos64" todir="bin/org/roettig/NRPSPredictor2/hmmer"/>
- 	  <copy file="src/org/roettig/NRPSPredictor2/hmmer/hmmpfam" todir="bin/org/roettig/NRPSPredictor2/hmmer"/>
- 	  <copy file="src/org/roettig/NRPSPredictor2/resources/aa-activating.aroundLys.hmm" todir="bin/org/roettig/NRPSPredictor2/resources"/>
+ 	  <copy file="src/org/roettig/NRPSpredictor2/hmmer/hmmpfam.macos64" todir="bin/org/roettig/NRPSpredictor2/hmmer"/>
+ 	  <copy file="src/org/roettig/NRPSpredictor2/hmmer/hmmpfam" todir="bin/org/roettig/NRPSpredictor2/hmmer"/>
+ 	  <copy file="src/org/roettig/NRPSpredictor2/resources/aa-activating.aroundLys.hmm" todir="bin/org/roettig/NRPSpredictor2/resources"/>
 	  <jar jarfile="build/NRPSpredictor2.jar" basedir="bin"/>
  </target>
 	
