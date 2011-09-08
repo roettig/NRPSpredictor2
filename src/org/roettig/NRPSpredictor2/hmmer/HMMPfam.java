@@ -22,7 +22,23 @@ public class HMMPfam
 			FileOutputStream fout = new FileOutputStream(executable);
 			byte[] buffer = new byte[2048];
 			int size;
-			InputStream zin = HMMPfam.class.getResourceAsStream("hmmpfam");
+			
+			InputStream zin = null;
+			
+			String os = System.getProperty("os.name");
+			
+			if(os.toLowerCase().contains("nux")||os.toLowerCase().contains("nix"))
+			{
+				zin = HMMPfam.class.getResourceAsStream("hmmpfam");
+			}
+			if(os.toLowerCase().contains("mac"))
+			{
+				zin = HMMPfam.class.getResourceAsStream("hmmpfam.macos64");
+			}
+			
+			if(zin==null)
+				throw new Exception("could not deploy hmmpfam binary for your platform :"+os);
+			
 			while ((size = zin.read(buffer, 0, 2048)) != -1)
 			{
 				fout.write(buffer, 0, size);
