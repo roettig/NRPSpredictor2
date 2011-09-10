@@ -1,0 +1,129 @@
+40a41,53
+> void
+> PrintFancyAliXML(FILE *fp, struct fancyali_s *ali)
+> {
+>  char  buffer[ali->len];
+>  buffer[ali->len-6]='\0';
+>  strncpy(buffer,ali->model+3,ali->len-6);
+>  fprintf(fp,"\t\t\t\t<modelline>%s</modelline>\n",buffer);
+>  strncpy(buffer,ali->mline+3,ali->len-6);
+>  fprintf(fp,"\t\t\t\t<matchline>%s</matchline>\n",buffer);
+>  strncpy(buffer,ali->aseq+3,ali->len-6);
+>  fprintf(fp,"\t\t\t\t<queryline>%s</queryline>\n",buffer);
+> }
+> 
+71a85
+>   { "-l",        TRUE,  sqdARG_STRING }, 
+182a197,199
+> 
+>   FILE  *out = 0;
+>   char  *logfile=0;
+237a255
+>     else if (strcmp(optname, "-l")        == 0) logfile        = optarg;  
+268a287,296
+>   if(logfile!=0)
+>   {
+>      printf("writing to logfile %s\n",logfile);
+>      out = fopen(logfile,"w");
+>   }
+>   else
+>      out = stdout;
+>   
+>   
+> 
+309c337,340
+<   HMMERBanner(stdout, banner);
+---
+>   //HMMERBanner(stdout, banner);
+> 
+>   fprintf(out,"<hmmpfamresults hmmfile=\"%s\" seqfile=\"%s\">\n", hmmfile, seqfile);
+>   /*
+314a346
+>   */
+349,350c381,383
+< 	  printf("Query:  %s  %s\n", sqinfo.name, 
+< 		 sqinfo.flags & SQINFO_DESC ? sqinfo.desc : "");
+---
+> 	  //printf("Query:  %s  %s\n", sqinfo.name, 
+> 	  //	 sqinfo.flags & SQINFO_DESC ? sqinfo.desc : "");
+>           fprintf(out,"\t<querysequence id=\"%s\">\n",sqinfo.name);
+354,356c387,390
+< 	  printf("\nQuery sequence: %s\n", sqinfo.name);
+< 	  printf("Accession:      %s\n", sqinfo.flags &SQINFO_ACC ? sqinfo.acc  : "[none]");
+< 	  printf("Description:    %s\n", sqinfo.flags &SQINFO_DESC? sqinfo.desc : "[none]");
+---
+> 	  fprintf(out,"\t<querysequence id=\"%s\">\n",sqinfo.name);
+> 	  //printf("\nQuery sequence: %s\n", sqinfo.name);
+> 	  //printf("Accession:      %s\n", sqinfo.flags &SQINFO_ACC ? sqinfo.acc  : "[none]");
+> 	  //printf("Description:    %s\n", sqinfo.flags &SQINFO_DESC? sqinfo.desc : "[none]");
+366,368c400,402
+<       printf("\nScores for sequence family classification (score includes all domains):\n");
+<       printf("%-*s %-*s %7s %10s %3s\n", namewidth, "Model", descwidth, "Description", "Score", "E-value", " N ");
+<       printf("%-*s %-*s %7s %10s %3s\n", namewidth, "--------", descwidth, "-----------", "-----", "-------", "---");
+---
+>       //printf("\nScores for sequence family classification (score includes all domains):\n");
+>       //printf("%-*s %-*s %7s %10s %3s\n", namewidth, "Model", descwidth, "Description", "Score", "E-value", " N ");
+>       //printf("%-*s %-*s %7s %10s %3s\n", namewidth, "--------", descwidth, "-----------", "-----", "-------", "---");
+407a442
+>               /*
+412a448,449
+>               */
+>               
+417c454
+<       if (nreported == 0) printf("\t[no hits above thresholds]\n");
+---
+>       //if (nreported == 0) printf("\t[no hits above thresholds]\n");
+423a461
+>       /*
+429c467,468
+<       
+---
+>       */
+>       fprintf(out,"\t\t<domainhits>\n");
+444c483,485
+< 	  else if (evalue <= thresh.domE && sc >= thresh.domT) {
+---
+> 	  else if (evalue <= thresh.domE && sc >= thresh.domT) 
+>           {
+>             /*
+453a495,496
+>             */
+>             fprintf(out,"\t\t\t<domainhit name=\"%s\" domidx=\"%d\" ndom=\"%d\" sqfrom=\"%d\" sqto=\"%d\" hmmfrom=\"%d\" hmmto=\"%d\" score=\"%e\" evalue=\"%e\"/>\n",name,domidx,ndom,sqfrom,sqto,hmmfrom,hmmto,sc,evalue);
+457,458c500,501
+<       if (nreported == 0) printf("\t[no hits above thresholds]\n");      
+< 
+---
+>       fprintf(out,"\t\t</domainhits>\n");
+>       //if (nreported == 0) printf("\t[no hits above thresholds]\n");      
+459a503
+>       fprintf(out,"\t\t<alignments>\n");
+467c511
+< 	  printf("\nAlignments of top-scoring domains:\n");
+---
+> 	  //printf("\nAlignments of top-scoring domains:\n");
+483a528
+>                   /*
+487a533,536
+>                   */
+>                   fprintf(out,"\t\t\t<alignment name=\"%s\" score=\"%e\" evalue=\"%e\">\n",name,sc,evalue);
+> 	          PrintFancyAliXML(out,ali);
+>                   fprintf(out,"\t\t\t</alignment>\n");
+491,492c540,541
+< 	  if (nreported == 0)      printf("\t[no hits above thresholds]\n");
+< 	  if (nreported == Alimit) printf("\t[output cut off at A = %d top alignments]\n", Alimit);
+---
+> 	  //if (nreported == 0)      printf("\t[no hits above thresholds]\n");
+> 	  //if (nreported == Alimit) printf("\t[output cut off at A = %d top alignments]\n", Alimit);
+493a543
+>       fprintf(out,"\t\t</alignments>\n");
+495,496c545,546
+< 
+<       printf("//\n");
+---
+>       //printf("//\n");
+>       fprintf(out,"\t</querysequence>\n");
+503a554
+>   fprintf(out,"</hmmpfamresults>\n");
+509a561,562
+> 
+>   fclose(out);
