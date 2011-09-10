@@ -24,6 +24,30 @@
 	  <jar jarfile="build/NRPSpredictor2.jar" basedir="bin"/>
  </target>
 	
+ <target name="deploy" depends="build">
+ 	 <property name="temp.folder" value="${java.io.tmpdir}/NRPSpredictor2/NRPSpredictor2"/>
+ 	 <delete dir="${temp.folder}"/>
+ 	
+ 	 <mkdir dir="${temp.folder}"/>
+ 	 <copy todir="${temp.folder}/build">
+ 	 		<fileset dir="build"/>
+ 	 </copy>
+ 	 <copy todir="${temp.folder}/lib">
+ 	 	 	<fileset dir="lib"/>
+ 	 </copy>	
+ 	 <copy todir="${temp.folder}/examples">
+ 	 	 	 	<fileset dir="examples"/>
+ 	 </copy>
+ 	 <copy todir="${temp.folder}/data">
+ 	 	 	 	 	<fileset dir="data"/>
+ 	 </copy>
+ 	 <copy file="runNRPSpredictor2.sh" todir="${temp.folder}"/>
+ 	 <copy file="runNRPSpredictor2.bat" todir="${temp.folder}"/>
+ 	 <copy file="README" todir="${temp.folder}"/>
+ 	 <zip destfile="build/NRPSpredictor2.zip" basedir="${java.io.tmpdir}/NRPSpredictor2"/>
+ 	 <delete dir="${temp.folder}"/>
+ </target>
+	
  <target name="clean">
 	  <delete dir="build"/>
  	  <delete dir="bin"/>

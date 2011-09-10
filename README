@@ -33,12 +33,12 @@ Example usage:
 # if you have a multi fasta file with NRPS sequences 
 # you issue
 
-./runNRPSpredictor2.sh -i examples/example.fa -s 0 -r report 
+sh runNRPSpredictor2.sh -i examples/example.fa -s 0 -r report 
 
 # if you have a file with already extracted signatures 
 # you issue
 
-./runNRPSpredictor2.sh -i examples/examples.sigs -s 1 -r report
+sh runNRPSpredictor2.sh -i examples/examples.sigs -s 1 -r report
 
 
 (Windows)
