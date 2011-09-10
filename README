@@ -9,8 +9,8 @@
 This package contains the NRPSPredictor2, a program to 
 predict adenylation domain specificity from sequence.
 
-The predictor currently runs on Linux and on the Mac OS
-platform.
+The predictor currently runs on Windows, Linux and on
+the Mac OS platform.
 
 To build the NRPSPredictor2 please issue on the shell
 
@@ -28,15 +28,31 @@ names.
 
 Example usage:
 
+(Linux/Max)
+
 # if you have a multi fasta file with NRPS sequences 
 # you issue
 
-./runNRPSpredictor2.sh -i in.fa -s 0 -r report 
+./runNRPSpredictor2.sh -i examples/example.fa -s 0 -r report 
 
 # if you have a file with already extracted signatures 
 # you issue
 
-./runNRPSpredictor2.sh -i in.sigs -s 1 -r report
+./runNRPSpredictor2.sh -i examples/examples.sigs -s 1 -r report
+
+
+(Windows)
+
+# if you have a multi fasta file with NRPS sequences 
+# you issue
+
+runNRPSpredictor2.bat -i examples/example.fa -s 0 -r report 
+
+# if you have a file with already extracted signatures 
+# you issue
+
+runNRPSpredictor2.bat -i examples/examples.sigs -s 1 -r report
+
 
 
 
