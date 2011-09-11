@@ -46,7 +46,8 @@ public class NRPSpredictor2
 		try
 		{
 			datadir = System.getProperty("datadir",datadir);
-
+			evalue  = Double.parseDouble(System.getProperty("evalue","0.00001"));
+			
 			if(argv.length==0)
 			{
 				banner();
@@ -57,7 +58,6 @@ public class NRPSpredictor2
 				System.out.println("An examplary signature file can be found in the examples directory");
 				System.exit(0);
 			}
-
 			
 			initSigDB();
 
@@ -105,11 +105,20 @@ public class NRPSpredictor2
 		}
 	}
 	
+	private static void debug(String message)
+	{
+		if(debug)
+			System.out.println(message);
+	}
+	
+	private static double evalue = 0.00001;
+	
 	private static void extractSigs(String infile) throws Exception
 	{
 		HMMPfam hmmpfam = new HMMPfam();
 		File model = Helper.deployFile(ResourceManager.class.getResourceAsStream("aa-activating.aroundLys.hmm"));
-		hmmpfam.run(0.00001, model, new File(infile));
+		hmmpfam.run( evalue, model, new File(infile));
+		
 		List<QueryResult> res = hmmpfam.getResults();
 		
 		ADomain cur_adom = null;
@@ -121,39 +130,96 @@ public class NRPSpredictor2
 			
 			int N = hits.size();
 			
-			for(int i=0;i<N;i+=2)
+			List<DomainHit>       a_hits = new ArrayList<DomainHit>();
+			List<DomainAlignment> a_alis = new ArrayList<DomainAlignment>();
+			
+			List<DomainHit>       l_hits = new ArrayList<DomainHit>();
+			List<DomainAlignment> l_alis = new ArrayList<DomainAlignment>();
+			
+			// find matching ADOM-LysDOM pairs
+			for(int i=0;i<N;i++)
 			{
-				DomainAlignment adom     = alis.get(i);
-				DomainHit       adom_hit = hits.get(i);
+				DomainHit       hit = hits.get(i);
+				DomainAlignment ali = alis.get(i);
 				
-				String a_topline  = adom.target;
-				String a_downline = adom.query;
-				
-				String l_topline  = "";
-				String l_downline = "";
-				
-				if((i+1)<alis.size())
+				if(hit.hmmname.equals("aa-activating-core.198-334"))
 				{
-					DomainAlignment lys  = alis.get(i+1);
-					l_topline  = lys.target;
-					l_downline = lys.query;
+					a_alis.add(ali);
+					a_hits.add(hit);
+				}
+				if(hit.hmmname.equals("aroundLys517"))
+				{
+					l_alis.add(ali);
+					l_hits.add(hit);
+				}
+			}
+			
+			int A = a_hits.size();
+			int L = l_hits.size();
+			
+			Map<Integer,Integer> aIdx2lIdx = new HashMap<Integer,Integer>();
+			
+			int J = 0;
+			for(int i=0;i<A;i++)
+			{
+				DomainHit       adom_hit = a_hits.get(i);
+				
+				int Aend = adom_hit.seqto;
+				for(int j=J;j<L;j++)
+				{
+					DomainHit       lys_hit = l_hits.get(j);
+					
+					int Lstart = lys_hit.seqfrom;
+					if( (Aend+200)>Lstart && (Aend<Lstart)) 
+					{
+						debug("matching ADomain hit "+i+" with LysDomain hit "+j);
+						aIdx2lIdx.put(i, j);
+						J++;
+						break;
+					}
+				}
+			}
+			for(int i=0;i<A;i++)
+			{
+				DomainHit       adom_hit = a_hits.get(i);
+				DomainAlignment adom_ali = a_alis.get(i);
+				
+				
+				
+				DomainAlignment ldom_ali = null;
+				Integer mIdx = aIdx2lIdx.get(i);
+				if(mIdx!=null)
+				{
+					ldom_ali = l_alis.get(aIdx2lIdx.get(i));
 				}
 				
 				ADomSigExtractor e = new ADomSigExtractor();
-				e.setADomainTopline(a_topline);
-				e.setADomainDownline(a_downline);
-				e.setLysDomainTopline(l_topline);
-				e.setLysDomainDownline(l_downline);
+				e.setADomain(adom_ali);
+				e.setLDomain(ldom_ali);
 				e.run();
 
 				cur_adom = new ADomain();
-				cur_adom.sig8a    = e.get8ASignature();
-				cur_adom.sigstach = e.getStachelhausCode();
-				cur_adom.sid      = qr.getQueryId();
-				cur_adom.startPos = adom_hit.seqfrom;
-				cur_adom.endPos   = adom_hit.seqto;
+				
+				try
+				{
+					cur_adom.sig8a    = e.get8ASignature();
+					cur_adom.sigstach = e.getStachelhausCode();
+				}
+				catch(Exception ex)
+				{
+					continue;
+				}
+				
+				
+				debug(cur_adom.sig8a+" - "+cur_adom.sigstach);
+				
+				cur_adom.sid       = qr.getQueryId();
+				cur_adom.startPos  = adom_hit.seqfrom;
+				cur_adom.endPos    = adom_hit.seqto;
 				cur_adom.pfamscore = adom_hit.score;
+				
 				adoms.add(cur_adom);
+			
 			}
 		}
 	}
@@ -163,17 +229,21 @@ public class NRPSpredictor2
 		System.out.println("\n");
 		System.out.println(" ##        Welcome to NRPSpredictor2 by        ##");
 		System.out.println(" ##    Marc Roettig, Marnix Medema, Kai Blin   ##");
-		System.out.println(" ##     based on work by Christian Rausch      ##\n");
+		System.out.println(" ##     based on work by Christian Rausch      ##");
+		if(debug)
+			System.out.println(" ##                DEBUG MODE                  ##");
+		System.out.println(" ##                                            ##\n");
 		System.out.println(" please cite: http://dx.doi.org/10.1093/nar/gki885");
-		System.out.println(" please cite: http://dx.doi.org/10.1093/nar/gkr323\n\n");
+		System.out.println(" please cite: http://dx.doi.org/10.1093/nar/gkr323\n\n");			
 	}
 	
 	private static boolean extractsigs    = false;
 	private static boolean bacterialMode  = true;
+	private static boolean debug = false;
 	private static String inputfile;
 	private static String outputfile;
 	private static String reportfile;
-	private static String datadir;
+	private static String datadir ="data";
 	
 	private static List<ADomain> adoms = new ArrayList<ADomain>();
 	
@@ -838,47 +908,51 @@ public class NRPSpredictor2
 	{
 		fillPrecs();
 		
-		Getopt g = new Getopt("NRPSpredictor2", argv, "i:o:b:s:r:");
+		Getopt g = new Getopt("NRPSpredictor2", argv, "i:o:b:s:r:d");
 		//
 		int c;
 		String arg;
 		while ((c = g.getopt()) != -1)
 		{
-			switch(c)
+			switch (c)
 			{
-			case 's':
-				arg = g.getOptarg();
-				if(arg.equals("1"))
-					extractsigs = false;
-				else
-					extractsigs = true;
-				break;
+				case 's':
+					arg = g.getOptarg();
+					if (arg.equals("1"))
+						extractsigs = false;
+					else
+						extractsigs = true;
+					break;
 				//
-			case 'b':
-				arg = g.getOptarg();
-				if(arg.equals("1"))
-					bacterialMode = true;
-				else
-					bacterialMode = false;
-				break;
-				//				
-			case 'i':
-				arg = g.getOptarg();
-				inputfile = arg;
-				break;
+				case 'b':
+					arg = g.getOptarg();
+					if (arg.equals("1"))
+						bacterialMode = true;
+					else
+						bacterialMode = false;
+					break;
 				//
-			case 'r':
-				arg = g.getOptarg();
-				reportfile = arg;
-				break;
-				//				
-			case 'o':
-				arg = g.getOptarg();
-				outputfile = arg;
-				break;
+				case 'i':
+					arg = g.getOptarg();
+					inputfile = arg;
+					break;
 				//
-			default:
-				break;				
+				case 'r':
+					arg = g.getOptarg();
+					reportfile = arg;
+					break;
+				//
+				case 'o':
+					arg = g.getOptarg();
+					outputfile = arg;
+					break;
+				//
+				case 'd':
+					debug = true;
+					debug("DEBUGMODE ON");
+					break;
+				default:
+					break;
 			}
 		}		
 	}

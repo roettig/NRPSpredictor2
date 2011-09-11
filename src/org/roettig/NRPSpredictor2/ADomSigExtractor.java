@@ -2,6 +2,8 @@ package org.roettig.NRPSpredictor2;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.roettig.NRPSpredictor2.hmmer.HMMPfamParser.DomainAlignment;
+
 
 public class ADomSigExtractor
 {
@@ -19,6 +21,26 @@ public class ADomSigExtractor
 	
 	public ADomSigExtractor()
 	{
+	}
+	
+	public void setADomain(DomainAlignment ali)
+	{
+		setADomainTopline(ali.target);
+		setADomainDownline(ali.query);
+	}
+	
+	public void setLDomain(DomainAlignment ali)
+	{
+		if(ali!=null)
+		{
+			setLysDomainTopline(ali.target);
+			setLysDomainDownline(ali.query);
+		}
+		else
+		{
+			setLysDomainTopline("");
+			setLysDomainDownline("");
+		}
 	}
 	
 	public void setADomainTopline(String s)
@@ -62,11 +84,11 @@ public class ADomSigExtractor
 			}
 		}
 		
-		a_topline = a_topline_tmp.toString();
+		a_topline  = a_topline_tmp.toString();
 		a_downline = a_downline_tmp.toString();
 	}
 	
-	private String extract8ASignature()
+	private String extract8ASignature() throws Exception
 	{
 		String s1 = extractCharacters( a_topline, a_downline, "KGVmveHrnvvnlvkwl", new int[]{12, 15, 16});
 		
@@ -80,14 +102,8 @@ public class ADomSigExtractor
 		
 		return s1+s2+s3+s4+s5;
 	}
-	// RWMTFDVSVWEWHFFCSGEHNLYGPTEAAVDVSW
-	// RWM
-	// TFDVSVWEW
-	// HF
-	// FCSGE
-	// HNLYGPTEAAVDVSW
 	
-	private String extractStachelhausSignature()
+	private String extractStachelhausSignature() throws Exception
 	{
 		String s2 = extractCharacters( a_topline, a_downline, "LqfssAysFDaSvweifgaLLnGgt", new int[]{9,10,13});
 		
@@ -97,25 +113,21 @@ public class ADomSigExtractor
 		
 		String s5 = extractCharacters( a_topline, a_downline, "liNaYGPTEtTVcaTi", new int[]{3,11,12});
 		
-		String s6 = extractCharacters( lys_topline, lys_downline, "fvvLdalPLTpNGKlDRkALPaPd", new int[]{13});
 		
-		return s2+s3+s4+s5+(s6.equals("")?"-":s6);
+		String s6 = "-";
+		if(!lys_topline.equals(""))
+				s6 = extractCharacters( lys_topline, lys_downline, "fvvLdalPLTpNGKlDRkALPaPd", new int[]{13});
+		
+		return s2+s3+s4+s5+s6;
 	}
 	
-	// DVWHFSLVDK
-	// DVW
-	// H
-	// FS
-	// LVD
-	
-	private String extractCharacters(String target, String source, String anchor_pattern, int[] idxs)
+	private String extractCharacters(String target, String source, String anchor_pattern, int[] idxs) throws Exception
 	{
 		int start_idx = target.indexOf(anchor_pattern);
 		String ret = "";
 		
 		if(start_idx<0)
-			return ret;
-
+			throw new Exception("could not find anchor pattern");
 		
 		for(Integer idx: idxs)
 		{
@@ -129,21 +141,20 @@ public class ADomSigExtractor
 	public void run()
 	{
 		removeToplineIndels();
-		sig8a    = extract8ASignature();
-		sigstach = extractStachelhausSignature();
 	}
 	
-	public String getStachelhausCode()
+	public String getStachelhausCode() throws Exception
 	{
-		return this.sigstach;
+		return extractStachelhausSignature();
 	}
 	
-	public String get8ASignature()
+	public String get8ASignature() throws Exception
 	{
-		return this.sig8a;
+		
+		return extract8ASignature();
 	}
 	
-	public static void main(String[] args)
+	public static void main(String[] args) throws Exception
 	{
 		ADomSigExtractor e = new ADomSigExtractor();
 		e.setADomainTopline("KGVmveHrnvvnlvkwlneryflfgeeddllgesdrvLqfssAysFDaSvweifgaLLnGgtLVivpkefsetrlDpeaLaalieregiTvlnltPsllnllldaaeeatpdfapedlssLrrvlvGGEaLspslarrlrerfpdragvrliNaYGPTEtTVcaTi");
