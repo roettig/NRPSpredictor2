@@ -45,10 +45,16 @@ public class HMMPfam
 			e.printStackTrace();
 		}
 	}
+		
+	private boolean debug = false;
 	
 	public HMMPfam()
 	{
-		
+	}
+	
+	public void debugModeOn()
+	{
+		debug = true;
 	}
 	
 	private File logfile;
@@ -56,7 +62,9 @@ public class HMMPfam
 	public void run(double evalue, File hmmmodel, File sequences) throws Exception
 	{
 		logfile = File.createTempFile("HMMPFAM", "RESULT");
-		logfile.deleteOnExit();
+		
+		if(!debug)
+			logfile.deleteOnExit();
 
 		ToolRunner tr = new ToolRunner();
 		tr.setJobDir(tmpdir);
