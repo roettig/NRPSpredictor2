@@ -65,6 +65,12 @@ public class NRPSpredictor2
 
 			banner();
 
+			if(!(new File(inputfile).exists()))
+			{
+				System.err.println("Error: Input file "+inputfile+" does not exist");
+				System.exit(1);
+			}
+			
 			if(extractsigs)
 			{
 				System.out.println("## extracting signatures from fasta file");
