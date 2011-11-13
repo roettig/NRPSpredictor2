@@ -3,6 +3,7 @@
  <target name="prepare" depends="clean">
  	  <mkdir dir="bin/"/>
       <mkdir dir="build/"/>
+ 	  <tstamp/>
  </target>
 	
  <target name="compile" depends="prepare">
@@ -44,7 +45,7 @@
  	 <copy file="runNRPSpredictor2.sh" todir="${temp.folder}"/>
  	 <copy file="runNRPSpredictor2.bat" todir="${temp.folder}"/>
  	 <copy file="README" todir="${temp.folder}"/>
- 	 <zip destfile="build/NRPSpredictor2.zip" basedir="${java.io.tmpdir}/NRPSpredictor2"/>
+ 	 <zip destfile="build/NRPSpredictor2_${DSTAMP}.zip" basedir="${java.io.tmpdir}/NRPSpredictor2"/>
  	 <delete dir="${temp.folder}"/>
  </target>
 	
