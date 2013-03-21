@@ -26,15 +26,15 @@ public class ADomain implements Serializable
 	public double pfamscore;
 	public boolean outlier;
 	
-	public static String NRPS2_THREE_CLUSTER  = "NRPS2_THREE_CLUSTER";
+	public static String NRPS2_THREE_CLUSTER         = "NRPS2_THREE_CLUSTER";
 	public static String NRPS2_THREE_CLUSTER_FUNGAL  = "NRPS2_THREE_CLUSTER_FUNGAL";
-	public static String NRPS2_LARGE_CLUSTER  = "NRPS2_LARGE_CLUSTER";
-	public static String NRPS2_SMALL_CLUSTER  = "NRPS2_SMALL_CLUSTER";
-	public static String NRPS2_SINGLE_CLUSTER = "NRPS2_SINGLE_CLUSTER";
-	public static String NRPS2_STACH_NN       = "NRPS2_STACH_NN";
-	public static String NRPS2_STACH_NN_FUNGAL= "NRPS2_STACH_NN_FUNGAL";
-	public static String NRPS1_LARGE_CLUSTER  = "NRPS1_LARGE_CLUSTER";
-	public static String NRPS1_SMALL_CLUSTER  = "NRPS1_SMALL_CLUSTER";
+	public static String NRPS2_LARGE_CLUSTER         = "NRPS2_LARGE_CLUSTER";
+	public static String NRPS2_SMALL_CLUSTER         = "NRPS2_SMALL_CLUSTER";
+	public static String NRPS2_SINGLE_CLUSTER        = "NRPS2_SINGLE_CLUSTER";
+	public static String NRPS2_STACH_NN              = "NRPS2_STACH_NN";
+	public static String NRPS2_STACH_NN_FUNGAL       = "NRPS2_STACH_NN_FUNGAL";
+	public static String NRPS1_LARGE_CLUSTER         = "NRPS1_LARGE_CLUSTER";
+	public static String NRPS1_SMALL_CLUSTER         = "NRPS1_SMALL_CLUSTER";
 	
 	private List<Detection> detections = new ArrayList<Detection>();
 	
@@ -85,22 +85,39 @@ public class ADomain implements Serializable
 	{
 		detections.add( new Detection(type,label,score, prec) );
 	}
-
+	
+	/**
+	 * Gets the sequence id.
+	 * @return
+	 */
 	public String getSid()
 	{
 		return sid;
 	}
 
+	/**
+	 * Sets the sequence id.
+	 * @param sid
+	 */
 	public void setSid(String sid)
 	{
 		this.sid = sid;
 	}
 
+	/**
+	 * Gets the 8 angstrom signature.
+	 * @return
+	 */
 	public String getSig8a()
 	{
 		return sig8a;
 	}
 
+	/**
+	 * Sets the 8 angstrom signature.
+	 * 
+	 * @param sig8a
+	 */
 	public void setSig8a(String sig8a)
 	{
 		this.sig8a = sig8a;
@@ -121,11 +138,19 @@ public class ADomain implements Serializable
 		}
 	}
 
+	/**
+	 * Gets the Stachelhaus signature code.
+	 * @return
+	 */
 	public String getSigstach()
 	{
 		return sigstach;
 	}
 
+	/**
+	 * Sets the Stachelhaus signature code.
+	 * @param sigstach
+	 */
 	public void setSigstach(String sigstach)
 	{
 		this.sigstach = sigstach;
@@ -150,6 +175,13 @@ public class ADomain implements Serializable
         encoder.close();
     }
 	
+	/**
+	 * Reads an ADomain from file.
+	 * 
+	 * @param filename
+	 * @return
+	 * @throws Exception
+	 */
 	public static ADomain read(String filename) throws Exception 
 	{
         XMLDecoder decoder =
@@ -160,56 +192,75 @@ public class ADomain implements Serializable
         return o;
     }
 
+	/**
+	 * Gets whether the ADomain is deemed to be an outlier.
+	 * @return
+	 */
 	public boolean isOutlier()
 	{
 		return outlier;
 	}
 
+	/**
+	 * Sets whether the ADomain is deemed to be an outlier.
+	 * @param outlier
+	 */
 	public void setOutlier(boolean outlier)
 	{
 		this.outlier = outlier;
 	}
 	
-	
-	
+	/**
+	 * Gets the end position of the extracted ADomain.
+	 * @return
+	 */
 	public int getStartPos()
 	{
 		return startPos;
 	}
 
+	/**
+	 * Sets the start position of the extracted ADomain.
+	 * @param startPos
+	 */
 	public void setStartPos(int startPos)
 	{
 		this.startPos = startPos;
 	}
 
+	/**
+	 * Gets the end position of the extracted ADomain.
+	 * @return
+	 */
 	public int getEndPos()
 	{
 		return endPos;
 	}
 
+	/**
+	 * Sets the end position of the extracted ADomain.
+	 * @param endPos
+	 */
 	public void setEndPos(int endPos)
 	{
 		this.endPos = endPos;
 	}
 
+	/**
+	 * Sets the score of the PFAM HMMER ADomain extraction step.
+	 * @return score
+	 */
 	public double getPfamscore()
 	{
 		return pfamscore;
 	}
 
+	/**
+	 * Sets the score of the PFAM HMMER ADomain extraction step.
+	 * @param pfamscore
+	 */
 	public void setPfamscore(double pfamscore)
 	{
 		this.pfamscore = pfamscore;
 	}
-
-	public static void main(String[] args)
-	{
-		ADomain ad = new ADomain();
-		ad.addDetection(ADomain.NRPS2_SINGLE_CLUSTER, "asp", 1.2);
-		ad.addDetection(ADomain.NRPS2_SINGLE_CLUSTER, "glu", 1.5);
-		ad.addDetection(ADomain.NRPS2_SINGLE_CLUSTER, "ala", 0.5);
-		System.out.println(ad.getBestDetection(ADomain.NRPS2_SINGLE_CLUSTER));
-	}
-
-
 }

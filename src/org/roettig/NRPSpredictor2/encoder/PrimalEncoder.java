@@ -1,4 +1,4 @@
-package org.roettig.NRPSpredictor2;
+package org.roettig.NRPSpredictor2.encoder;
 
 public interface PrimalEncoder
 {

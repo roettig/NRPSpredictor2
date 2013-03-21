@@ -25,14 +25,15 @@ import org.roettig.NRPSpredictor2.hmmer.HMMPfam;
 import org.roettig.NRPSpredictor2.hmmer.HMMPfamParser.DomainAlignment;
 import org.roettig.NRPSpredictor2.hmmer.HMMPfamParser.DomainHit;
 import org.roettig.NRPSpredictor2.hmmer.HMMPfamParser.QueryResult;
+import org.roettig.NRPSpredictor2.predictors.ADChecker;
+import org.roettig.NRPSpredictor2.predictors.BacterialNRPSPredictor;
+import org.roettig.NRPSpredictor2.predictors.BacterialNRPSPredictor2;
+import org.roettig.NRPSpredictor2.predictors.FungalNRPSPredictor2;
 import org.roettig.NRPSpredictor2.resources.ResourceManager;
-import org.roettig.NRPSpredictor2.svm.FeatureVector;
-import org.roettig.NRPSpredictor2.svm.SVMlightModel;
 import org.roettig.NRPSpredictor2.util.Helper;
 
 import libsvm.svm;
 import libsvm.svm_model;
-import libsvm.svm_node;
 
 public class NRPSpredictor2
 {	
@@ -55,11 +56,10 @@ public class NRPSpredictor2
 				System.out.println("Usage: NRPSPredictor2 -i <inputfile> -r <reportfile> -s [0|1 use signatures?]\n");
 				System.out.println("");
 				System.out.println("The inputfile can either be a flatfile with signatures or multi-fastafile with full sequences.");
-				System.out.println("An examplary signature file can be found in the examples directory");
+				System.out.println("An exemplary signature file can be found in the examples directory");
 				System.exit(0);
 			}
 			
-			initSigDB();
 
 			parseCommandline(argv);
 
@@ -493,6 +493,7 @@ public class NRPSpredictor2
 	    encoder.close();
 	}
 	
+	@SuppressWarnings("unchecked")
 	public static List<ADomain> load(String filename) throws Exception
 	{
 		XMLDecoder decoder =
@@ -502,41 +503,7 @@ public class NRPSpredictor2
         decoder.close();
         return o;
 	}
-	
-	
-	
-	private static List<String> specs     = new ArrayList<String>();
-	private static List<String> specs_fungal = new ArrayList<String>();
-	private static List<String> sig8a     = new ArrayList<String>();
-	private static List<String> sigstach = new ArrayList<String>();
-	private static List<String> sigstach_fungal = new ArrayList<String>();
-	
-	private static void initSigDB() throws IOException
-	{
-		BufferedReader in = new BufferedReader(new FileReader(datadir+"/labeled_sigs"));
-		String line = "";
-		while((line=in.readLine())!=null)
-		{
-			String toks[] = line.split("\\\t");
-			specs.add(toks[0]);
-			sig8a.add(toks[1]);
-			sigstach.add(toks[2]);
-		}
-		in.close();
 		
-		in = new BufferedReader(new FileReader(datadir+"/fungal_labeled_sigs"));
-		line = "";
-		while((line=in.readLine())!=null)
-		{
-			String toks[] = line.split("\\\t");
-			specs_fungal.add(toks[0]);
-			sigstach_fungal.add(toks[2]);
-		}
-		in.close();
-	}
-	
-	
-
 	private static void report(String outputfile, List<ADomain> adoms) throws FileNotFoundException
 	{
 		PrintWriter out = new PrintWriter( new File(reportfile) );
@@ -573,161 +540,24 @@ public class NRPSpredictor2
 	
 	public static void fungalPrediction() throws ParseException, IOException
 	{	
-		PrimalEncoder encR = new PrimalRauschEncoder();
-		
-		// check applicability domain
-		//checkAD("bacterial");
-		
-		//////////
-		// NRPS1
-		/////////
-		
-		// large cluster predictions
-		String large_cluster[] = {"phe,trp,phg,tyr,bht","ser,thr,dhpg,hpg","gly,ala,val,leu,ile,abu,iva","asp,asn,glu,gln,aad","cys","orn,lys,arg","pro,pip","dhb,sal"}; 
-	
-		// small cluster predictions
-		String small_cluster[] = {"aad","val,leu,ile,abu,iva","arg","asp,asn","cys","dhb,sal","glu,gln","orn,horn","tyr,bht","pro","ser","dhpg,hpg","phe,trp","gly,ala","thr"};	 
-	
-		
-		if(!extractsigs)
-		{
-			for(String sc: large_cluster)
-			{
-				detect(ADomain.NRPS1_LARGE_CLUSTER, sc, encR);
-			}
-
-			for(String sc: small_cluster)
-			{			
-				detect(ADomain.NRPS1_SMALL_CLUSTER, sc, encR);
-			}
-		}
-		
-		//////////
-		// NRPS2 
-		/////////
-	
-		
-		PrimalEncoder encW = new PrimalWoldEncoder();
-		
-		// 3 class predictions
-		String three_class[] = {"hydrophilic","hydrophobic-aliphatic","hydrophobic-aromatic"};
-		for(String sc: three_class)
-		{
-			detect(ADomain.NRPS2_THREE_CLUSTER, sc, encW);
-		}
-		
-		// large cluster predictions
-		//String large_cluster[] = {"phe,trp,phg,tyr,bht","ser,thr,dhpg,hpg","gly,ala,val,leu,ile,abu,iva","asp,asn,glu,gln,aad","cys","orn,lys,arg","pro,pip","dhb,sal"}; 
-		
-		for(String sc: large_cluster)
-		{
-			detect(ADomain.NRPS2_LARGE_CLUSTER, sc, encW);
-		}
-		
-		// small cluster predictions
-		//String small_cluster[] = {"aad","val,leu,ile,abu,iva","arg","asp,asn","cys","dhb,sal","glu,gln","orn,horn","tyr,bht","pro","ser","dhpg,hpg","phe,trp","gly,ala","thr"}; 
-		for(String sc: small_cluster)
-		{			
-			detect(ADomain.NRPS2_SMALL_CLUSTER, sc, encW);
-		}
-		
-		// single aa predictions
-		String single_cluster[] = {"aad","ala","arg","asn","asp","bht","cys","dhb","dhpg","gln","glu","gly","hpg","ile","iva","leu","lys","orn","phe","pip","pro","ser","thr","trp","tyr","val"}; 
-		for(String sc: single_cluster)
-		{
-			detect(ADomain.NRPS2_SINGLE_CLUSTER, sc, encW);
-		}
-		
-		detectStachNN(false);
+		FungalNRPSPredictor2 fungalPred2 = new FungalNRPSPredictor2();
+		fungalPred2.predict(adoms);
 	}
 	
 	public static void bacterialPrediction() throws ParseException, IOException
 	{	
-		PrimalEncoder encR = new PrimalRauschEncoder();
-		
-		// check applicability domain
-		checkAD("bacterial");
-		
-		//////////
-		// NRPS1
-		/////////
-		
-		// large cluster predictions
-		String large_cluster[] = {"phe,trp,phg,tyr,bht","ser,thr,dhpg,hpg","gly,ala,val,leu,ile,abu,iva","asp,asn,glu,gln,aad","cys","orn,lys,arg","pro,pip","dhb,sal"}; 
-	
-		// small cluster predictions
-		String small_cluster[] = {"aad","val,leu,ile,abu,iva","arg","asp,asn","cys","dhb,sal","glu,gln","orn,horn","tyr,bht","pro","ser","dhpg,hpg","phe,trp","gly,ala","thr"};	 
-	
-		
-		if(!extractsigs)
-		{
-			for(String sc: large_cluster)
-			{
-				detect(ADomain.NRPS1_LARGE_CLUSTER, sc, encR);
-			}
-
-			for(String sc: small_cluster)
-			{			
-				detect(ADomain.NRPS1_SMALL_CLUSTER, sc, encR);
-			}
-		}
-		
-		//////////
-		// NRPS2 
-		/////////
-	
-		
-		PrimalEncoder encW = new PrimalWoldEncoder();
-		
-		// 3 class predictions
-		String three_class[] = {"hydrophilic","hydrophobic-aliphatic","hydrophobic-aromatic"};
-		for(String sc: three_class)
-		{
-			detect(ADomain.NRPS2_THREE_CLUSTER, sc, encW);
-		}
-		
-		// large cluster predictions
-		//String large_cluster[] = {"phe,trp,phg,tyr,bht","ser,thr,dhpg,hpg","gly,ala,val,leu,ile,abu,iva","asp,asn,glu,gln,aad","cys","orn,lys,arg","pro,pip","dhb,sal"}; 
-		
-		for(String sc: large_cluster)
-		{
-			detect(ADomain.NRPS2_LARGE_CLUSTER, sc, encW);
-		}
-		
-		// small cluster predictions
-		//String small_cluster[] = {"aad","val,leu,ile,abu,iva","arg","asp,asn","cys","dhb,sal","glu,gln","orn,horn","tyr,bht","pro","ser","dhpg,hpg","phe,trp","gly,ala","thr"}; 
-		for(String sc: small_cluster)
-		{			
-			detect(ADomain.NRPS2_SMALL_CLUSTER, sc, encW);
-		}
-		
-		// single aa predictions
-		String single_cluster[] = {"aad","ala","arg","asn","asp","bht","cys","dhb","dhpg","gln","glu","gly","hpg","ile","iva","leu","lys","orn","phe","pip","pro","ser","thr","trp","tyr","val"}; 
-		for(String sc: single_cluster)
-		{
-			detect(ADomain.NRPS2_SINGLE_CLUSTER, sc, encW);
-		}
-		
-		detectStachNN(true);
+		BacterialNRPSPredictor bactPred1 = new BacterialNRPSPredictor();
+		bactPred1.predict(adoms);
+		BacterialNRPSPredictor2 bactPred2 = new BacterialNRPSPredictor2();
+		bactPred2.predict(adoms);
 	}
 	
 	public static void checkAD(String model) throws IOException
-	{
-		svm_model m = svm.svm_load_model(datadir+String.format("/models/%s_1class.mdl",model));
-		
-		PrimalWoldEncoder enc = new PrimalWoldEncoder();
-		
-		for(ADomain ad: adoms)
-		{
-			double fv[]  = enc.encode(ad.sig8a);
-			svm_node x[] = makeSVMnode(fv,1);
-			double yp = svm.svm_predict(m,x);
-			if(yp>=0.0)
-				ad.setOutlier(false);
-			else
-				ad.setOutlier(true);
-		}
-		
+	{	
+		ADChecker adc = new ADChecker();
+		svm_model mdl = svm.svm_load_model(String.format("data/models/%s_1class.mdl","bacterial"));
+		adc.setModel(mdl);
+		adc.check(adoms);
 	}
 	
 	public static Map<String,Double> precs      = new HashMap<String,Double>();
@@ -735,11 +565,6 @@ public class NRPSpredictor2
 	
 	public static void fillPrecs()
 	{
-		String three_class[]    = {"hydrophilic","hydrophobic-aliphatic","hydrophobic-aromatic"};
-		String large_cluster[]  = {"phe,trp,phg,tyr,bht","ser,thr,dhpg,hpg","gly,ala,val,leu,ile,abu,iva","asp,asn,glu,gln,aad","cys","orn,lys,arg","pro,pip","dhb,sal"};
-		String small_cluster[]  = {"aad","val,leu,ile,abu,iva","arg","asp,asn","cys","dhb,sal","glu,gln","orn,horn","tyr,bht","pro","ser","dhpg,hpg","phe,trp","gly,ala","thr"};
-		String single_cluster[] = {"aad","ala","arg","asn","asp","bht","cys","dhb","dhpg","gln","glu","gly","hpg","ile","iva","leu","lys","orn","phe","pip","pro","ser","thr","trp","tyr","val"};
-		
 		precs.put("hydrophilic",0.940);
 		precs.put("hydrophobic-aliphatic",0.974);
 		precs.put("hydrophobic-aromatic",0.890);
@@ -815,100 +640,6 @@ public class NRPSpredictor2
 		precsNRPS1.put("thr,dht", 0.942);
 	}
 	
-	public static void detect(String type, String label, PrimalEncoder enc) throws ParseException, FileNotFoundException, IOException
-	{
-		SVMlightModel m = new SVMlightModel(new FileInputStream(String.format("%s/models/%s/[%s].mdl",datadir,type,label)));
-		
-		for(ADomain ad: adoms)
-		{
-			double fv[] = enc.encode(ad.sig8a);
-			double yp   = m.predict(makeFVec(fv));
-			if(yp>0.0)
-			{
-				if(type.contains("NRPS2"))
-				{
-					if(precs.containsKey(label))
-						ad.addDetection(type, label, yp, precs.get(label));
-					else
-						ad.addDetection(type, label, yp, 0.0);
-				}
-				else
-				{
-					if(precsNRPS1.containsKey(label))
-						ad.addDetection(type, label, yp, precsNRPS1.get(label));
-					else
-						ad.addDetection(type, label, yp, 0.0);
-				}
-			}
-		}
-	}
-	
-	public static void detectStachNN(boolean bacterial)
-	{
-		for(ADomain ad: adoms)
-		{
-			String[] hitspec = new String[1];
-			double sim = nearestSignature(ad, hitspec, bacterial);
-			if(bacterial)
-				ad.addDetection(ADomain.NRPS2_STACH_NN, hitspec[0], sim);
-			else
-				ad.addDetection(ADomain.NRPS2_STACH_NN_FUNGAL, hitspec[0], sim);
-		}
-	}
-	
-	public static double nearestSignature(ADomain ad, String[] hit, boolean bacterial)
-	{
-		String a_sig   = ad.sigstach;
-		int maxMatches = 0;
-		int idx = 0;
-		
-		List<String> sigs;
-		if(bacterial)
-			sigs = sigstach;
-		else
-			sigs = sigstach_fungal;
-		
-		for(String sig: sigs)
-		{
-			int matches = 0;
-			for(int i=0;i<sig.length();i++)
-			{
-				if(sig.charAt(i)==a_sig.charAt(i))
-					matches++;
-			}
-			if(matches>maxMatches)
-			{
-				maxMatches = matches;
-				hit[0] = specs.get(idx); 
-			}
-			idx++;
-		}
-		return (1.0*maxMatches)/(a_sig.length());
-	}
-	
-
-	public static svm_node[] makeSVMnode(double[] row, int idx)
-	{
-		int m        = row.length;
-		svm_node[] x = new svm_node[m+1];
-
-		x[0]         = new svm_node();
-		x[0].index   = 0; 
-		x[0].value   = idx;
-
-		for(int j=1;j<=m;j++)
-		{
-			x[j]       = new svm_node();
-			x[j].index = j; 
-			x[j].value = row[j-1];
-		}
-		return x;
-	}
-	
-	public static FeatureVector makeFVec(double[] fts)
-	{
-		return new FeatureVector(fts);
-	}
 	
 	public static void parseCommandline(String[] argv)
 	{

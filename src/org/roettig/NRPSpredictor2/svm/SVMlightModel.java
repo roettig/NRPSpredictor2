@@ -12,9 +12,28 @@ import java.util.List;
 
 public class SVMlightModel
 {
+	protected List<SupportVector> svs = new ArrayList<SupportVector>();
+	
+	protected int     dim;
+	protected int     kerneltype;
+	protected double  bias;
+	protected double  kernelparam1;
+	protected double  kernelparam2;
+	protected String  label;
+
 	public SVMlightModel(InputStream in) throws FileNotFoundException, IOException
 	{
 		parseModel(in);
+	}
+
+	public String getLabel()
+	{
+		return label;
+	}
+
+	public void setLabel(String label)
+	{
+		this.label = label;
 	}
 	
 	private static double readFrontDouble(String line)
@@ -157,39 +176,5 @@ public class SVMlightModel
 		}
 		
 		return fvecs;
-	}
-
-	private int     dim;
-	private int     kerneltype;
-	private double  bias;
-	private double  kernelparam1;
-	private double  kernelparam2;
-	
-	private List<SupportVector> svs = new ArrayList<SupportVector>();
-	
-	
-	public static void main(String[] args) throws FileNotFoundException, IOException
-	{
-		SVMlightModel mdl = new SVMlightModel(new FileInputStream(new File("/tmp/model")));
-		/*
-		FeatureVector fv = new FeatureVector(408);
-		fv.setFeatureValue(0, 1.0);
-		fv.setFeatureValue(2, 1.0);
-		fv.setFeatureValue(54, 1.0);
-		System.out.println("y="+mdl.predict(fv, new RBFKernel(0.0056731971)));
-		
-		fv = new FeatureVector(408);
-		fv.setFeatureValue(0, .0);
-		fv.setFeatureValue(2, 0.0);
-		fv.setFeatureValue(32, 0.0);
-		System.out.println("y="+mdl.predict(fv, new RBFKernel(0.0056731971)));
-		*/
-		List<FeatureVector> fvecs = SVMlightModel.readFromFile("/tmp/test");
-		for(FeatureVector fvec: fvecs)
-		{
-			//System.out.println("y="+mdl.predict(fvec, new RBFKernel(0.0056731971)));
-			System.out.println("y="+mdl.predict(fvec));
-		}
-	}
-
+	}	
 }

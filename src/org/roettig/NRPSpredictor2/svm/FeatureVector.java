@@ -41,4 +41,9 @@ public class FeatureVector
 		}	
 		return Math.sqrt(sum);
 	}
+	
+	public static FeatureVector makeFVec(double[] fts)
+	{
+		return new FeatureVector(fts);
+	}
 }
