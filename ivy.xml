@@ -1,0 +1,9 @@
+<ivy-module version="2.0">
+    <info organisation="org.apache" module="NRPSpredictor2"/>
+    <dependencies>
+		<dependency org="maven" name="dom4j" rev="1.7-20060614"/>
+		<dependency org="jaxen" name="jaxen" rev="1.1.4"/>
+		<dependency org="gnu.getopt" name="java-getopt" rev="1.0.13"/>
+		<dependency org="tw.edu.ntu.csie" name="libsvm" rev="3.1"/>
+	</dependencies>
+</ivy-module>

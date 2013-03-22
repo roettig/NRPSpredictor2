@@ -1,56 +1,60 @@
-<project name="NRPSpredictor2" default="build" basedir=".">
+<project xmlns:ivy="antlib:org.apache.ivy.ant" name="NRPSpredictor2" default="build" basedir=".">
 
- <target name="prepare" depends="clean">
- 	  <mkdir dir="bin/"/>
-      <mkdir dir="build/"/>
- 	  <tstamp/>
- </target>
+	<target name="resolve" description="retrieve dependencies with ivy">
+		<ivy:retrieve />
+	</target>
 	
- <target name="compile" depends="prepare">
-      <javac srcdir="src/" destdir="bin/" includeantruntime="false" debug="on" debuglevel="lines,vars,source">
-      	<classpath>
-      	    <fileset dir="lib">
-      	     	<include name="*.jar"/>
-      	    </fileset>
-      	</classpath>
-      </javac>
- </target>
-	
- <target name="build" depends="compile">
- 	  <copy file="src/org/roettig/NRPSpredictor2/hmmer/hmmpfam.macos64" todir="bin/org/roettig/NRPSpredictor2/hmmer"/>
- 	  <copy file="src/org/roettig/NRPSpredictor2/hmmer/hmmpfam" todir="bin/org/roettig/NRPSpredictor2/hmmer"/>
-      <copy file="src/org/roettig/NRPSpredictor2/hmmer/hmmpfam.win32" todir="bin/org/roettig/NRPSpredictor2/hmmer"/>
- 	  <copy file="src/org/roettig/NRPSpredictor2/hmmer/cygwin1.dll" todir="bin/org/roettig/NRPSpredictor2/hmmer"/>
- 	  <copy file="src/org/roettig/NRPSpredictor2/resources/aa-activating.aroundLys.hmm" todir="bin/org/roettig/NRPSpredictor2/resources"/>
-	  <jar jarfile="build/NRPSpredictor2.jar" basedir="bin"/>
- </target>
-	
- <target name="deploy" depends="build">
- 	 <property name="temp.folder" value="${java.io.tmpdir}/NRPSpredictor2/NRPSpredictor2"/>
- 	 <delete dir="${temp.folder}"/>
- 	
- 	 <mkdir dir="${temp.folder}"/>
- 	 <copy todir="${temp.folder}/build">
- 	 		<fileset dir="build"/>
- 	 </copy>
- 	 <copy todir="${temp.folder}/lib">
- 	 	 	<fileset dir="lib"/>
- 	 </copy>	
- 	 <copy todir="${temp.folder}/examples">
- 	 	 	 	<fileset dir="examples"/>
- 	 </copy>
- 	 <copy todir="${temp.folder}/data">
- 	 	 	 	 	<fileset dir="data"/>
- 	 </copy>
- 	 <copy file="runNRPSpredictor2.sh" todir="${temp.folder}"/>
- 	 <copy file="runNRPSpredictor2.bat" todir="${temp.folder}"/>
- 	 <copy file="README" todir="${temp.folder}"/>
- 	 <zip destfile="build/NRPSpredictor2_${DSTAMP}.zip" basedir="${java.io.tmpdir}/NRPSpredictor2"/>
- 	 <delete dir="${temp.folder}"/>
- </target>
-	
- <target name="clean">
-	  <delete dir="build"/>
- 	  <delete dir="bin"/>
- </target>
-</project>	
+	<target name="prepare" depends="clean,resolve">
+		<mkdir dir="bin/"/>
+		<mkdir dir="build/"/>
+		<tstamp/>
+	</target>
+
+	<target name="compile" depends="prepare">
+		<javac srcdir="src/" destdir="bin/" includeantruntime="false" debug="on" debuglevel="lines,vars,source">
+			<classpath>
+				<fileset dir="lib">
+					<include name="*.jar"/>
+				</fileset>
+			</classpath>
+		</javac>
+	</target>
+
+	<target name="build" depends="compile">
+		<copy file="src/org/roettig/NRPSpredictor2/hmmer/hmmpfam.macos64" todir="bin/org/roettig/NRPSpredictor2/hmmer"/>
+		<copy file="src/org/roettig/NRPSpredictor2/hmmer/hmmpfam" todir="bin/org/roettig/NRPSpredictor2/hmmer"/>
+		<copy file="src/org/roettig/NRPSpredictor2/hmmer/hmmpfam.win32" todir="bin/org/roettig/NRPSpredictor2/hmmer"/>
+		<copy file="src/org/roettig/NRPSpredictor2/hmmer/cygwin1.dll" todir="bin/org/roettig/NRPSpredictor2/hmmer"/>
+		<copy file="src/org/roettig/NRPSpredictor2/resources/aa-activating.aroundLys.hmm" todir="bin/org/roettig/NRPSpredictor2/resources"/>
+		<jar jarfile="build/NRPSpredictor2.jar" basedir="bin"/>
+	</target>
+
+	<target name="deploy" depends="build">
+		<property name="temp.folder" value="${java.io.tmpdir}/NRPSpredictor2/NRPSpredictor2"/>
+		<delete dir="${temp.folder}"/>
+
+		<mkdir dir="${temp.folder}"/>
+		<copy todir="${temp.folder}/build">
+			<fileset dir="build"/>
+		</copy>
+		<copy todir="${temp.folder}/lib">
+			<fileset dir="lib"/>
+		</copy>
+		<copy todir="${temp.folder}/examples">
+			<fileset dir="examples"/>
+		</copy>
+		<copy todir="${temp.folder}/data">
+			<fileset dir="data"/>
+		</copy>
+		<copy file="runNRPSpredictor2.sh" todir="${temp.folder}"/>
+		<copy file="runNRPSpredictor2.bat" todir="${temp.folder}"/>
+		<copy file="README" todir="${temp.folder}"/>
+		<zip destfile="build/NRPSpredictor2_${DSTAMP}.zip" basedir="${java.io.tmpdir}/NRPSpredictor2"/>
+		<delete dir="${temp.folder}"/>
+	</target>
+
+	<target name="clean">
+		<delete dir="build"/>
+		<delete dir="bin"/>
+	</target>
+</project>
