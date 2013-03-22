@@ -9,9 +9,6 @@ import java.io.FileOutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
-
-import org.roettig.utilities.StringHelper;
 
 public class ADomain implements Serializable
 {
