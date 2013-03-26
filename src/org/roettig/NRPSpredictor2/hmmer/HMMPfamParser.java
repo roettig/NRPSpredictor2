@@ -1,8 +1,6 @@
 package org.roettig.NRPSpredictor2.hmmer;
 
-import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
@@ -32,6 +30,7 @@ public class HMMPfamParser
 		return results;
 	}
 	
+	@SuppressWarnings("unchecked")
 	private void parse(InputStream xmlstream) throws ParserConfigurationException, SAXException, DocumentException
 	{	
 		SAXParserFactory factory = SAXParserFactory.newInstance();
@@ -79,9 +78,9 @@ public class HMMPfamParser
 				ali.score   =  Double.parseDouble(alinode.valueOf("@score"));
 				ali.evalue  =  Double.parseDouble(alinode.valueOf("@evalue"));
 				ali.hmmname =  alinode.valueOf("@name");
-				ali.target  =  alinode.valueOf("modelline/text()");
-				ali.match   =  alinode.valueOf("matchline/text()");
-				ali.query   =  alinode.valueOf("queryline/text()");
+				ali.target  =  alinode.selectSingleNode("modelline").getText();
+				ali.match   =  alinode.selectSingleNode("matchline").getText();
+				ali.query   =  alinode.selectSingleNode("queryline").getText();
 				res.addAlignment(ali);
 			}
 			
