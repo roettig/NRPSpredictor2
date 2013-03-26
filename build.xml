@@ -47,6 +47,8 @@
 			<fileset dir="data"/>
 		</copy>
 		<copy file="runNRPSpredictor2.sh" todir="${temp.folder}"/>
+		<fixcrlf srcdir="${temp.folder}" includes="**/*.sh"
+		         eol="lf" eof="remove" />
 		<copy file="runNRPSpredictor2.bat" todir="${temp.folder}"/>
 		<copy file="README" todir="${temp.folder}"/>
 		<zip destfile="build/NRPSpredictor2_${DSTAMP}.zip" basedir="${java.io.tmpdir}/NRPSpredictor2"/>
