@@ -13,8 +13,6 @@ public class ADomSigExtractor
 	private String lys_topline;
 	private String lys_downline;
 	
-	private String sig8a;
-	private String sigstach;
 	
 	private List<Integer>   indel_idx_topline = new ArrayList<Integer>();
 	private List<Character> char_del_downline = new ArrayList<Character>();  

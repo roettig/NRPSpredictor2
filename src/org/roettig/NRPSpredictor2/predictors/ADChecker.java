@@ -1,7 +1,5 @@
 package org.roettig.NRPSpredictor2.predictors;
 
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
 import libsvm.svm;
@@ -11,7 +9,6 @@ import libsvm.svm_node;
 import org.roettig.NRPSpredictor2.ADomain;
 import org.roettig.NRPSpredictor2.encoder.PrimalEncoder;
 import org.roettig.NRPSpredictor2.encoder.PrimalWoldEncoder;
-import org.roettig.NRPSpredictor2.svm.FeatureVector;
 
 public class ADChecker
 {
