@@ -1,6 +1,7 @@
 package org.roettig.NRPSpredictor2.hmmer;
 
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
@@ -19,10 +20,29 @@ public class HMMPfamParser
 {
 	private List<QueryResult> results = new ArrayList<QueryResult>();
 	
-	public HMMPfamParser(String filename) throws Exception
+	public HMMPfamParser(String filename)
 	{
-		InputStream xmlstream = new FileInputStream(filename);
-		parse(xmlstream);
+		try
+		{
+			InputStream xmlstream = new FileInputStream(filename);
+			parse(xmlstream);
+		}
+		catch(FileNotFoundException e)
+		{
+			throw new RuntimeException(e);
+		}
+		catch (ParserConfigurationException e)
+		{
+			throw new RuntimeException(e);
+		}
+		catch (SAXException e)
+		{
+			throw new RuntimeException(e);
+		}
+		catch (DocumentException e)
+		{
+			throw new RuntimeException(e);
+		}
 	}
 	
 	public List<QueryResult> getResultsForQueries()

@@ -21,6 +21,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import org.roettig.NRPSpredictor2.extraction.ADomSigExtractor;
+import org.roettig.NRPSpredictor2.extraction.ADomain;
 import org.roettig.NRPSpredictor2.hmmer.HMMPfam;
 import org.roettig.NRPSpredictor2.hmmer.HMMPfamParser.DomainAlignment;
 import org.roettig.NRPSpredictor2.hmmer.HMMPfamParser.DomainHit;
@@ -28,6 +30,7 @@ import org.roettig.NRPSpredictor2.hmmer.HMMPfamParser.QueryResult;
 import org.roettig.NRPSpredictor2.predictors.ADChecker;
 import org.roettig.NRPSpredictor2.predictors.BacterialNRPSPredictor;
 import org.roettig.NRPSpredictor2.predictors.BacterialNRPSPredictor2;
+import org.roettig.NRPSpredictor2.predictors.Detection;
 import org.roettig.NRPSpredictor2.predictors.FungalNRPSPredictor2;
 import org.roettig.NRPSpredictor2.resources.ResourceManager;
 import org.roettig.NRPSpredictor2.util.Helper;

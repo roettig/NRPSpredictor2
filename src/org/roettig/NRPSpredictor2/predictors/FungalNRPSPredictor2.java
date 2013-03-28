@@ -1,7 +1,7 @@
 package org.roettig.NRPSpredictor2.predictors;
 
-import org.roettig.NRPSpredictor2.ADomain;
 import org.roettig.NRPSpredictor2.encoder.PrimalWoldEncoder;
+import org.roettig.NRPSpredictor2.extraction.ADomain;
 
 
 public class FungalNRPSPredictor2 extends PredictorBase

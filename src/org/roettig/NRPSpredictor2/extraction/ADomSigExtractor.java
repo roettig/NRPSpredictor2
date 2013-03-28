@@ -1,8 +1,16 @@
-package org.roettig.NRPSpredictor2;
+package org.roettig.NRPSpredictor2.extraction;
+import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import org.roettig.NRPSpredictor2.hmmer.HMMPfam;
 import org.roettig.NRPSpredictor2.hmmer.HMMPfamParser.DomainAlignment;
+import org.roettig.NRPSpredictor2.hmmer.HMMPfamParser.DomainHit;
+import org.roettig.NRPSpredictor2.hmmer.HMMPfamParser.QueryResult;
+import org.roettig.NRPSpredictor2.resources.ResourceManager;
+import org.roettig.NRPSpredictor2.util.Helper;
 
 
 public class ADomSigExtractor
@@ -133,9 +141,7 @@ public class ADomSigExtractor
 		}
 		return ret;
 	}
-	
-	
-	
+		
 	public void run()
 	{
 		removeToplineIndels();

@@ -1,7 +1,7 @@
 package org.roettig.NRPSpredictor2.predictors;
 
-import org.roettig.NRPSpredictor2.ADomain;
 import org.roettig.NRPSpredictor2.encoder.PrimalWoldEncoder;
+import org.roettig.NRPSpredictor2.extraction.ADomain;
 
 public class BacterialNRPSPredictor2 extends PredictorBase
 {

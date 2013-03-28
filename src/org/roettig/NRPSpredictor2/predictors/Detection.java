@@ -1,4 +1,4 @@
-package org.roettig.NRPSpredictor2;
+package org.roettig.NRPSpredictor2.predictors;
 
 import java.io.Serializable;
 import java.util.Locale;

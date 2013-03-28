@@ -3,8 +3,8 @@ package org.roettig.NRPSpredictor2.predictors;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.roettig.NRPSpredictor2.ADomain;
 import org.roettig.NRPSpredictor2.encoder.PrimalEncoder;
+import org.roettig.NRPSpredictor2.extraction.ADomain;
 import org.roettig.NRPSpredictor2.svm.FeatureVector;
 import org.roettig.NRPSpredictor2.svm.SVMlightModel;
 

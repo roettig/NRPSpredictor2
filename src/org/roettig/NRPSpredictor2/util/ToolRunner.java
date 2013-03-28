@@ -49,7 +49,7 @@ public class ToolRunner
 		return output;
 	}
 	
-	public int run(String... cmds) throws Exception
+	public int run(String... cmds)
 	{
 		List<String> opts = new ArrayList<String>();
 

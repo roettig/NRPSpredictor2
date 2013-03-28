@@ -6,9 +6,9 @@ import libsvm.svm;
 import libsvm.svm_model;
 import libsvm.svm_node;
 
-import org.roettig.NRPSpredictor2.ADomain;
 import org.roettig.NRPSpredictor2.encoder.PrimalEncoder;
 import org.roettig.NRPSpredictor2.encoder.PrimalWoldEncoder;
+import org.roettig.NRPSpredictor2.extraction.ADomain;
 
 public class ADChecker
 {

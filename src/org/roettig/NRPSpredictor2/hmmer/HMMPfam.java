@@ -1,6 +1,7 @@
 package org.roettig.NRPSpredictor2.hmmer;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.List;
 import org.roettig.NRPSpredictor2.hmmer.HMMPfamParser.QueryResult;
 import org.roettig.NRPSpredictor2.util.Helper;
@@ -59,9 +60,16 @@ public class HMMPfam
 	
 	private File logfile;
 	
-	public void run(double evalue, File hmmmodel, File sequences) throws Exception
+	public void run(double evalue, File hmmmodel, File sequences)
 	{
-		logfile = File.createTempFile("HMMPFAM", "RESULT");
+		try
+		{
+			logfile = File.createTempFile("HMMPFAM", "RESULT");
+		}
+		catch (IOException e)
+		{
+			throw new RuntimeException(e);
+		}
 		
 		if(!debug)
 			logfile.deleteOnExit();
@@ -72,11 +80,11 @@ public class HMMPfam
 		if(tr.getReturnCode()!=0)
 		{
 			System.err.println(tr.getOutput());
-			throw new Exception("hmmpfam terminated with non-zero exit code");
+			throw new RuntimeException("hmmpfam terminated with non-zero exit code");
 		}
 	}
 	
-	public List<QueryResult> getResults() throws Exception
+	public List<QueryResult> getResults()
 	{
 		HMMPfamParser parser = new HMMPfamParser(logfile.getAbsolutePath());
 		return parser.getResultsForQueries();

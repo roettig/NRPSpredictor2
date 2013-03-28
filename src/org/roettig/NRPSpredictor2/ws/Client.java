@@ -30,7 +30,7 @@ public class Client
         
         NRPSPredictorRequest req = new NRPSPredictorRequest();
         req.addSequence(new Sequence("1","VETSFDGFTFDGFVLFGGEIHVYGPTETTVFATF",Kingdom.Bacterial,SequenceType.Signature8A));
-        req.addSequence(new Sequence("1","RWATFDLSVWELHFLCSGEHNLYGPTEAAIDVTA",Kingdom.Bacterial,SequenceType.Signature8A));
+        req.addSequence(new Sequence("2","RWATFDLSVWELHFLCSGEHNLYGPTEAAIDVTA",Kingdom.Bacterial,SequenceType.Signature8A));
         
         NRPSPredictorResponse response = svc.predict(req);
         

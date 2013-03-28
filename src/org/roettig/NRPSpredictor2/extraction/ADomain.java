@@ -1,4 +1,4 @@
-package org.roettig.NRPSpredictor2;
+package org.roettig.NRPSpredictor2.extraction;
 
 import java.beans.XMLDecoder;
 import java.beans.XMLEncoder;
@@ -9,6 +9,8 @@ import java.io.FileOutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.roettig.NRPSpredictor2.predictors.Detection;
 
 public class ADomain implements Serializable
 {
