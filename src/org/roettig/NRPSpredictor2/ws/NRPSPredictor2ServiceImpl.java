@@ -14,9 +14,13 @@ import org.roettig.NRPSpredictor2.predictors.Detection;
 import org.roettig.NRPSpredictor2.util.Helper;
 import org.roettig.NRPSpredictor2.ws.Sequence.SequenceType;
 
+import com.sun.istack.internal.logging.Logger;
+
 @WebService(endpointInterface = "org.roettig.NRPSpredictor2.ws.NRPSPredictor2Service",serviceName="NRPSPredictor2Service")
 public class NRPSPredictor2ServiceImpl implements NRPSPredictor2Service
 {
+	private static final Logger logger = Logger.getLogger(NRPSPredictor2ServiceImpl.class);
+	
 	@Resource 
 	WebServiceContext context;
 	
@@ -28,13 +32,13 @@ public class NRPSPredictor2ServiceImpl implements NRPSPredictor2Service
 		
 		List<Sequence> seqs = request.getSequences();
 		
-		System.out.println("predict: size = "+seqs.size());
+		logger.info("predict: size = "+seqs.size());
 		
 		for(Sequence seq: seqs)
 		{
 			ADomain ad = new ADomain();
 			
-			if(SequenceType.FullSequence==seq.getSequenceType())
+			if(SequenceType.FullSequence.equals(seq.getSequenceType()))
 			{
 				List<ADomain> adoms_ = Helper.extractADomainsFromFullSequence(seq.getId(),seq.getSequence());
 				int idx = 1;
@@ -45,11 +49,15 @@ public class NRPSPredictor2ServiceImpl implements NRPSPredictor2Service
 					idx++;
 				}
 			}
-			else if(SequenceType.Signature8A==seq.getSequenceType())
+			else if(SequenceType.Signature8A.equals(seq.getSequenceType()))
 			{
 				ad.setSig8a(seq.getSequence());
 				ad.setSid(seq.getId());
 				adoms.add( ad );
+			}
+			else if(SequenceType.SignatureStachelhaus.equals(seq.getSequenceType()))
+			{
+				// ToDo
 			}
 		}
 		
@@ -63,6 +71,7 @@ public class NRPSPredictor2ServiceImpl implements NRPSPredictor2Service
 				ADomainPrediction adm = new ADomainPrediction(ad.getSid(),ad.sig8a,det.getLabel(),(float)det.getScore(),ad.outlier);
 				adm.setStachelhausCode(ad.sigstach);
 				response.addPrediction(adm);
+				logger.info(adm.toString());
 			}
 			
 		}

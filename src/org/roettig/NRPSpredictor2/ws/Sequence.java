@@ -1,26 +1,32 @@
 package org.roettig.NRPSpredictor2.ws;
 
 import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlEnum;
+import javax.xml.bind.annotation.XmlEnumValue;
 import javax.xml.bind.annotation.XmlRootElement;
 
 @XmlRootElement(namespace="http://ws.NRPSpredictor2.roettig.org/")
 public class Sequence
 {
+
+	@XmlEnum
 	public enum Kingdom
 	{
-		Bacterial,
-		Fungal
+		@XmlEnumValue(value="bacterial") Bacterial,
+		@XmlEnumValue(value="fungal") Fungal
 	}
 	
+
+	@XmlEnum
 	public enum SequenceType
 	{
-		FullSequence,
-		Signature8A,
-		SignatureStachelhaus
+		@XmlEnumValue(value="FullSequence") FullSequence,
+		@XmlEnumValue(value="Signature8A") Signature8A,
+		@XmlEnumValue(value="SignatureStachelhaus") SignatureStachelhaus
 	}
 	
 	private String       sequence;
-	private SequenceType isSignature;
+	private SequenceType type;
 	private String  id;
 	private Kingdom kingdom;
 	
@@ -31,7 +37,7 @@ public class Sequence
 		this.id = id;
 		this.sequence = seq;
 		this.kingdom = kingdom;
-		this.isSignature = type;
+		this.type = type;
 	}
 	
 	@XmlElement(name="seqString",required=true,namespace="http://ws.NRPSpredictor2.roettig.org/")
@@ -48,12 +54,12 @@ public class Sequence
 	@XmlElement(required=true,namespace="http://ws.NRPSpredictor2.roettig.org/")
 	public SequenceType getSequenceType()
 	{
-		return isSignature;
+		return type;
 	}
 	
 	public void setSequenceType(SequenceType sequenceType)
 	{
-		this.isSignature = sequenceType;
+		this.type = sequenceType;
 	}
 	
 	@XmlElement(required=true,namespace="http://ws.NRPSpredictor2.roettig.org/")
