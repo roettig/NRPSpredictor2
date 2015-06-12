@@ -1,6 +1,22 @@
 package org.roettig.NRPSpredictor2.encoder;
 
 
+/**
+ * This implementation of the PrimalEncoder interface
+ * yields the feature vector comprised of three zscales
+ * published in
+ * 
+ * Hellberg S, Sjöström M, Skagerberg B, Wold S: 
+ * 
+ * Peptide quantitative structure-activity relationships, a multivariate approach.
+ * 
+ * J Med Chem 1987, 30:1126-1135
+ * 
+ * PMID: 3599020 
+ *   
+ * @author roettig
+ *
+ */
 public class PrimalWoldEncoder 
 implements 
 	PrimalEncoder
