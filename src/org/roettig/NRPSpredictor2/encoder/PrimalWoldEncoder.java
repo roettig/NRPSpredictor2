@@ -1,11 +1,23 @@
 package org.roettig.NRPSpredictor2.encoder;
 
 
-public class PrimalWoldEncoder implements PrimalEncoder
+public class PrimalWoldEncoder 
+implements 
+	PrimalEncoder
 {
-
+	/**
+	 * Z1 descriptor values. Lipophilicity. 
+	 */
 	private static double[] Z1 = new double[26];
+	
+	/**
+	 * Z2 descriptor values.  Bulk size. 
+	 */
 	private static double[] Z2 = new double[26];
+	
+	/**
+	 * Z3 descriptor values. Polarity / charge.
+	 */
 	private static double[] Z3 = new double[26];
 	
 	static
@@ -15,18 +27,29 @@ public class PrimalWoldEncoder implements PrimalEncoder
 		Z3[0]=0.09;Z3[17]=-3.44;Z3[13]=0.84;Z3[3]=2.36;Z3[2]=4.13;Z3[16]=-1.14;Z3[4]=-0.07;Z3[6]=0.3;Z3[7]=1.11;Z3[8]=-1.03;Z3[11]=-0.98;Z3[10]=-3.14;Z3[12]=-0.41;Z3[5]=0.45;Z3[15]=2.23;Z3[18]=0.57;Z3[19]=-1.4;Z3[22]=0.85;Z3[24]=0.01;Z3[21]=-1.29;
 	}
 
+	/** {@inheritDoc} **/
 	public double[] encode(String t)
 	{
+		// normalize the characters
 		t = t.toUpperCase();
+
 		int N = t.length();
+		
 		double ret[] = new double[3*N];
+		
 		int idx = 0;
+		
+		// iterate over characters
 		for(int i=0;i<t.length();i++)
 		{
+			// .. extract character
 			char c = t.charAt(i);
+			
+			// lookup descriptorvalues Z1,Z2,Z3 and normalize these (Zscore)
 			double z1 = (getZ1(c)-0.001923076923076976)/2.6160275521955336;
 			double z2 = (getZ2(c)-0.0011538461538461635)/1.8589595518420015;
 			double z3 = (getZ3(c)-0.0015384615384615096)/1.545268112160973;
+			
 			ret[idx]=z1; idx++;
 			ret[idx]=z2; idx++;
 			ret[idx]=z3; idx++;
@@ -34,6 +57,13 @@ public class PrimalWoldEncoder implements PrimalEncoder
 		return ret;
 	}
 
+	/**
+	 * Static helper method to get Z1 descriptor value from character.
+	 * 
+	 * @param x the character
+	 * 
+	 * @return
+	 */
 	public static double getZ1(char x)
 	{
 		if(x=='-'||x=='X')
@@ -41,6 +71,13 @@ public class PrimalWoldEncoder implements PrimalEncoder
 		return Z1[ ((char) x)-65 ];
 	}	
 
+	/**
+	 * Static helper method to get Z2 descriptor value from character.
+	 * 
+	 * @param x the character
+	 * 
+	 * @return
+	 */
 	public static double getZ2(char x)
 	{
 		if(x=='-'||x=='X')
@@ -48,6 +85,13 @@ public class PrimalWoldEncoder implements PrimalEncoder
 		return Z2[ ((char) x)-65 ];
 	}
 
+	/**
+	 * Static helper method to get Z2 descriptor value from character.
+	 * 
+	 * @param x the character
+	 * 
+	 * @return
+	 */
 	public static double getZ3(char x)
 	{
 		if(x=='-'||x=='X')
