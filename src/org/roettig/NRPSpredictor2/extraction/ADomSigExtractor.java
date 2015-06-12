@@ -1,16 +1,8 @@
 package org.roettig.NRPSpredictor2.extraction;
-import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
-import org.roettig.NRPSpredictor2.hmmer.HMMPfam;
+import java.util.ArrayList;
+import java.util.List;
 import org.roettig.NRPSpredictor2.hmmer.HMMPfamParser.DomainAlignment;
-import org.roettig.NRPSpredictor2.hmmer.HMMPfamParser.DomainHit;
-import org.roettig.NRPSpredictor2.hmmer.HMMPfamParser.QueryResult;
-import org.roettig.NRPSpredictor2.resources.ResourceManager;
-import org.roettig.NRPSpredictor2.util.Helper;
 
 
 public class ADomSigExtractor
@@ -94,7 +86,9 @@ public class ADomSigExtractor
 		a_downline = a_downline_tmp.toString();
 	}
 	
-	private String extract8ASignature() throws Exception
+	private String extract8ASignature() 
+	throws 
+		Exception
 	{
 		String s1 = extractCharacters( a_topline, a_downline, "KGVmveHrnvvnlvkwl", new int[]{12, 15, 16});
 		
@@ -109,7 +103,9 @@ public class ADomSigExtractor
 		return s1+s2+s3+s4+s5;
 	}
 	
-	private String extractStachelhausSignature() throws Exception
+	private String extractStachelhausSignature() 
+	throws 
+		Exception
 	{
 		String s2 = extractCharacters( a_topline, a_downline, "LqfssAysFDaSvweifgaLLnGgt", new int[]{9,10,13});
 		
@@ -127,7 +123,9 @@ public class ADomSigExtractor
 		return s2+s3+s4+s5+s6;
 	}
 	
-	private String extractCharacters(String target, String source, String anchor_pattern, int[] idxs) throws Exception
+	private String extractCharacters(String target, String source, String anchor_pattern, int[] idxs) 
+	throws 
+		Exception
 	{
 		int start_idx = target.indexOf(anchor_pattern);
 		String ret = "";
@@ -141,33 +139,41 @@ public class ADomSigExtractor
 		}
 		return ret;
 	}
-		
-	public void run()
+	
+	/**
+	 * Do the extraction.
+	 */
+	public void extract()
 	{
 		removeToplineIndels();
 	}
 	
-	public String getStachelhausCode() throws Exception
+	/**
+	 * Gives the Stachelhaus code of the a-domain.
+	 * 
+	 * @return
+	 * 
+	 * @throws Exception
+	 */
+	public String getStachelhausCode() 
+	throws 
+		Exception
 	{
 		return extractStachelhausSignature();
 	}
 	
-	public String get8ASignature() throws Exception
+	/**
+	 * Gives the 8 angstrom signature of the a-domain.
+	 * 
+	 * @return
+	 * 
+	 * @throws Exception
+	 */
+	public String get8ASignature() 
+	throws 
+		Exception
 	{
 		
 		return extract8ASignature();
-	}
-	
-	public static void main(String[] args) throws Exception
-	{
-		ADomSigExtractor e = new ADomSigExtractor();
-		e.setADomainTopline("KGVmveHrnvvnlvkwlneryflfgeeddllgesdrvLqfssAysFDaSvweifgaLLnGgtLVivpkefsetrlDpeaLaalieregiTvlnltPsllnllldaaeeatpdfapedlssLrrvlvGGEaLspslarrlrerfpdragvrliNaYGPTEtTVcaTi");
-		e.setADomainDownline("KGVMVGQTAIVNRLLWMQN---HYPLTG-----EDVVAQKTP-CSFDVSVWEFFWPFIAGAKLVMAEPE---AHRDPLAMQQFFAEYGVTTTHFVPSMLAAFVASL---TPQTARQSCVTLKQVFCSGEALPADLCREWQQLTG--A--PLHNLYGPTEAAVDVSW");
-        e.setLysDomainTopline("daaeLRahLaarLPdYMVPsaVkfvvLdalPLTpNGKlDRkALPaPdaaa");
-        e.setLysDomainDownline("DTSALQAQLRETLPPHMVPVV--LLQLPQLPLSANGKLDRKALPLPELKA");
-		e.run();
-		System.out.println(e.get8ASignature());
-		System.out.println(e.getStachelhausCode());
-	}
-	
+	}	
 }
