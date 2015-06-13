@@ -12,7 +12,10 @@ import java.util.List;
 
 import org.roettig.NRPSpredictor2.predictors.Detection;
 
-public class ADomain implements Serializable
+
+public class ADomain 
+implements 
+	Serializable
 {
 	private static final long	serialVersionUID	= -8665277739063399904L;
 	
@@ -155,6 +158,7 @@ public class ADomain implements Serializable
 		this.sigstach = sigstach;
 	}
 
+	/** {@inheritDoc} **/
 	public String toString()
 	{
 		StringBuffer sb = new StringBuffer();
@@ -164,7 +168,18 @@ public class ADomain implements Serializable
 		return sb.toString();
 	}
 	
-	public void write(String filename) throws Exception
+	/**
+	 * Writes an ADomain to file.
+	 * 
+	 * @param filename
+	 * 
+	 * @return
+	 * 
+	 * @throws Exception
+	 */
+	public void write(String filename) 
+	throws 
+		Exception
 	{
         XMLEncoder encoder =
            new XMLEncoder(
@@ -181,7 +196,9 @@ public class ADomain implements Serializable
 	 * @return
 	 * @throws Exception
 	 */
-	public static ADomain read(String filename) throws Exception 
+	public static ADomain read(String filename) 
+	throws 
+		Exception 
 	{
         XMLDecoder decoder =
             new XMLDecoder(new BufferedInputStream(

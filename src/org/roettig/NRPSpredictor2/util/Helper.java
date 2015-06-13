@@ -153,7 +153,7 @@ public class Helper
 				ADomSigExtractor e = new ADomSigExtractor();
 				e.setADomain(adom_ali);
 				e.setLDomain(ldom_ali);
-				e.run();
+				e.extract();
 
 				cur_adom = new ADomain();
 

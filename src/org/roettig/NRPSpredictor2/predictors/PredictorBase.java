@@ -8,10 +8,13 @@ import org.roettig.NRPSpredictor2.extraction.ADomain;
 import org.roettig.NRPSpredictor2.svm.FeatureVector;
 import org.roettig.NRPSpredictor2.svm.SVMlightModel;
 
-public abstract class PredictorBase implements Predictor
+public abstract class PredictorBase 
+implements 
+	Predictor
 {
 	
 	protected PrimalEncoder encoder;
+	
 	protected List<NRPSPredictorModel> models = new ArrayList<NRPSPredictorModel>();
 	
 	public void predict(List<ADomain> domains)
@@ -20,7 +23,11 @@ public abstract class PredictorBase implements Predictor
 			predictForModel(domains, model.getType(), model.getLabel(), model);
 	}
 	
-	protected void predictForModel(List<ADomain> domains, String type, String label, SVMlightModel model)
+	protected void predictForModel(
+			List<ADomain> domains, 
+			String type, 
+			String label, 
+			SVMlightModel model)
 	{
 		for(ADomain adomain: domains)
 		{
@@ -41,5 +48,15 @@ public abstract class PredictorBase implements Predictor
 	public void setEncoder(PrimalEncoder encoder)
 	{
 		this.encoder = encoder;
+	}
+
+	public List<NRPSPredictorModel> getModels() 
+	{
+		return models;
+	}
+
+	public void setModels(List<NRPSPredictorModel> models) 
+	{
+		this.models = models;
 	}
 }

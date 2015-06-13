@@ -21,6 +21,9 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import libsvm.svm;
+import libsvm.svm_model;
+
 import org.roettig.NRPSpredictor2.extraction.ADomSigExtractor;
 import org.roettig.NRPSpredictor2.extraction.ADomain;
 import org.roettig.NRPSpredictor2.hmmer.HMMPfam;
@@ -34,9 +37,6 @@ import org.roettig.NRPSpredictor2.predictors.Detection;
 import org.roettig.NRPSpredictor2.predictors.FungalNRPSPredictor2;
 import org.roettig.NRPSpredictor2.resources.ResourceManager;
 import org.roettig.NRPSpredictor2.util.Helper;
-
-import libsvm.svm;
-import libsvm.svm_model;
 
 public class NRPSpredictor2
 {	
@@ -122,7 +122,9 @@ public class NRPSpredictor2
 	
 	private static double evalue = 0.00001;
 	
-	private static void extractSigs(String infile) throws Exception
+	private static void extractSigs(String infile) 
+	throws 
+		Exception
 	{
 		HMMPfam hmmpfam = new HMMPfam();
 		File model = Helper.deployFile(ResourceManager.class.getResourceAsStream("aa-activating.aroundLys.hmm"));
@@ -205,7 +207,7 @@ public class NRPSpredictor2
 				ADomSigExtractor e = new ADomSigExtractor();
 				e.setADomain(adom_ali);
 				e.setLDomain(ldom_ali);
-				e.run();
+				e.extract();
 
 				cur_adom = new ADomain();
 				
@@ -261,46 +263,68 @@ public class NRPSpredictor2
 		if(!checkSignatureFormat(new File(filename)))
 			crash("invalid signature file supplied");
 		
-		BufferedReader br = new BufferedReader(new FileReader(filename));
-		String line = null;
-		ADomain cur_adom = null;
-		while ((line = br.readLine()) != null)   
+		BufferedReader br = null;
+		
+		try
 		{
-			line = line.trim();
-			if(line.equals(""))
-				continue;
-			String toks[] = line.split("\\\t");
-			cur_adom = new ADomain();
-			cur_adom.setSig8a(toks[0]);
-			if(toks.length>1)
-				cur_adom.sid = toks[1];
-			adoms.add(cur_adom);
+			br = new BufferedReader(new FileReader(filename));
+			String line = null;
+			ADomain cur_adom = null;
+			while ((line = br.readLine()) != null)   
+			{
+				line = line.trim();
+				if(line.equals(""))
+					continue;
+				String toks[] = line.split("\\\t");
+				cur_adom = new ADomain();
+				cur_adom.setSig8a(toks[0]);
+				if(toks.length>1)
+					cur_adom.sid = toks[1];
+				adoms.add(cur_adom);
+			}
+		}
+		finally
+		{
+			if(null!=br)
+				br.close();
 		}
 	}
 	
-	public static boolean checkSignatureFormat(File infile) throws IOException
+	public static boolean checkSignatureFormat(File infile) 
+	throws 
+		IOException
 	{
-		BufferedReader br = new BufferedReader(new FileReader(infile));
-		String line = "";
-		while((line=br.readLine())!=null)
+		BufferedReader br = null;
+		
+		try
 		{
-			line = line.trim();
-			if(line.equals(""))
-				continue;
-			String toks[] = line.split("\\t");
-			if(toks.length!=2)
+			br= new BufferedReader(new FileReader(infile));
+		
+			String line = "";
+			while((line=br.readLine())!=null)
 			{
-				return false;
+				line = line.trim();
+				if(line.equals(""))
+					continue;
+				String toks[] = line.split("\\t");
+				if(toks.length!=2)
+				{
+					return false;
+				}
+				String sig = toks[0].toUpperCase();
+				if(sig.length()!=34)
+				{
+					return false;
+				}
+				if(!sig.matches("[A,C,D,E,F,G,H,I,K,L,M,N,P,Q,R,S,T,V,W,X,Y,-]+"))
+					return false;
 			}
-			String sig = toks[0].toUpperCase();
-			if(sig.length()!=34)
-			{
-				return false;
-			}
-			if(!sig.matches("[A,C,D,E,F,G,H,I,K,L,M,N,P,Q,R,S,T,V,W,X,Y,-]+"))
-				return false;
 		}
-		br.close();
+		finally
+		{
+			if(null!=br)
+				br.close();
+		}
 		return true;
 	}
 	
@@ -696,6 +720,4 @@ public class NRPSpredictor2
 			}
 		}		
 	}
-	
-
 }
