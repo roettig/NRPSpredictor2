@@ -1,5 +1,7 @@
 package org.roettig.NRPSpredictor2.encoder;
 
+import org.roettig.NRPSpredictor2.util.StatisticsHelper;
+
 
 /**
  * This implementation of the PrimalEncoder interface
