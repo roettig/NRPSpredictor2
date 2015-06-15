@@ -3,7 +3,7 @@ package org.roettig.NRPSpredictor2.util;
 public class StatisticsHelper 
 {
 	/**
-	 * Comuptes the unbiased sample mean.
+	 * Computes the unbiased sample mean.
 	 * 
 	 * @param x array of values 
 	 * 
@@ -22,7 +22,7 @@ public class StatisticsHelper
 	}
 
 	/**
-	 * Comuptes the corrected (unbiased) sample variance.
+	 * Computes the corrected (unbiased) sample variance.
 	 * 
 	 * @param x array of values 
 	 * 
@@ -43,7 +43,7 @@ public class StatisticsHelper
 	}
 	
 	/**
-	 * Comuptes the corrected (unbiased) sample standard deviation.
+	 * Computes the corrected (unbiased) sample standard deviation.
 	 * 
 	 * @param x array of values
 	 * 
