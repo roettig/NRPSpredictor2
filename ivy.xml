@@ -5,6 +5,8 @@
 		<dependency org="jaxen" name="jaxen" rev="1.1.4"/>
 		<dependency org="gnu.getopt" name="java-getopt" rev="1.0.13"/>
 		<dependency org="tw.edu.ntu.csie" name="libsvm" rev="3.1"/>
-		<dependency org="org.apache.logging.log4j" name="log4j-core" rev="2.1"/>
+		<dependency org="org.apache.logging.log4j" name="log4j-core" rev="2.3"/>
+		<dependency org="org.apache.logging.log4j" name="log4j-api" rev="2.3"/>
+		
 	</dependencies>
 </ivy-module>

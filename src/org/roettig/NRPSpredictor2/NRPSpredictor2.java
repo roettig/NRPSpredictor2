@@ -20,10 +20,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Properties;
 
 import libsvm.svm;
 import libsvm.svm_model;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.roettig.NRPSpredictor2.extraction.ADomSigExtractor;
 import org.roettig.NRPSpredictor2.extraction.ADomain;
 import org.roettig.NRPSpredictor2.hmmer.HMMPfam;
@@ -38,8 +41,13 @@ import org.roettig.NRPSpredictor2.predictors.FungalNRPSPredictor2;
 import org.roettig.NRPSpredictor2.resources.ResourceManager;
 import org.roettig.NRPSpredictor2.util.Helper;
 
+
 public class NRPSpredictor2
 {	
+	/**
+	 * The logger.
+	 */
+	private static final Logger logger = LogManager.getLogger(NRPSpredictor2.class);
 	
 	public static void main(String[] argv) throws Exception
 	{
@@ -55,11 +63,11 @@ public class NRPSpredictor2
 			if(argv.length==0)
 			{
 				banner();
-				System.out.println("");
-				System.out.println("Usage: NRPSPredictor2 -i <inputfile> -r <reportfile> -s [0|1 use signatures?]\n");
-				System.out.println("");
-				System.out.println("The inputfile can either be a flatfile with signatures or multi-fastafile with full sequences.");
-				System.out.println("An exemplary signature file can be found in the examples directory");
+				logger.info("");
+				logger.info("Usage: NRPSPredictor2 -i <inputfile> -r <reportfile> -s [0|1 use signatures?]\n");
+				logger.info("");
+				logger.info("The inputfile can either be a flatfile with signatures or multi-fastafile with full sequences.");
+				logger.info("An exemplary signature file can be found in the examples directory");
 				System.exit(0);
 			}
 			
@@ -70,33 +78,33 @@ public class NRPSpredictor2
 
 			if(!(new File(inputfile).exists()))
 			{
-				System.err.println("Error: Input file "+inputfile+" does not exist");
+				logger.error("Error: Input file "+inputfile+" does not exist");
 				System.exit(1);
 			}
 			
 			if(extractsigs)
 			{
-				System.out.println("## extracting signatures from fasta file");
+				logger.info("## extracting signatures from fasta file");
 				extractSigs(inputfile);
 			}
 			else
 			{
-				System.out.println("## using signature input");
+				logger.info("## using signature input");
 				parseSigs(inputfile);
 			}
 			
 
-			System.out.println("## start predicting on "+adoms.size()+" signatures");
+			logger.info("## start predicting on "+adoms.size()+" signatures");
 
 			// we now have a list of adomain objects
 			if(bacterialMode)
 			{
-				System.out.println("## bacterial mode");
+				logger.info("## bacterial mode");
 				bacterialPrediction();
 			}
 			else
 			{
-				System.out.println("## fungal mode");
+				logger.info("## fungal mode");
 				fungalPrediction();
 			}
 
@@ -109,7 +117,7 @@ public class NRPSpredictor2
 		}
 		catch(Throwable e)
 		{
-			e.printStackTrace();
+			logger.error(e.getMessage(),e);
 			System.exit(1);
 		}
 	}
@@ -117,7 +125,7 @@ public class NRPSpredictor2
 	private static void debug(String message)
 	{
 		if(debug)
-			System.out.println(message);
+			logger.debug(message);
 	}
 	
 	private static double evalue = 0.00001;
@@ -237,15 +245,15 @@ public class NRPSpredictor2
 
 	public static void banner()
 	{
-		System.out.println("\n");
-		System.out.println(" ##        Welcome to NRPSpredictor2 by        ##");
-		System.out.println(" ##    Marc Roettig, Marnix Medema, Kai Blin   ##");
-		System.out.println(" ##     based on work by Christian Rausch      ##");
+		logger.info("\n");
+		logger.info(" ##        Welcome to NRPSpredictor2 by        ##");
+		logger.info(" ##    Marc Roettig, Marnix Medema, Kai Blin   ##");
+		logger.info(" ##     based on work by Christian Rausch      ##");
 		if(debug)
-			System.out.println(" ##                DEBUG MODE                  ##");
-		System.out.println(" ##                                            ##\n");
-		System.out.println(" please cite: http://dx.doi.org/10.1093/nar/gki885");
-		System.out.println(" please cite: http://dx.doi.org/10.1093/nar/gkr323\n\n");			
+			logger.info(" ##                DEBUG MODE                  ##");
+		logger.info(" ##                                            ##\n");
+		logger.info(" please cite: http://dx.doi.org/10.1093/nar/gki885");
+		logger.info(" please cite: http://dx.doi.org/10.1093/nar/gkr323\n\n");			
 	}
 	
 	private static boolean extractsigs    = false;
@@ -330,7 +338,7 @@ public class NRPSpredictor2
 	
 	private static void crash(String msg)
 	{
-		System.err.println(msg);
+		logger.error(msg);
 		System.exit(1);
 	}
 
@@ -592,81 +600,36 @@ public class NRPSpredictor2
 	
 	public static void fillPrecs()
 	{
-		precs.put("hydrophilic",0.940);
-		precs.put("hydrophobic-aliphatic",0.974);
-		precs.put("hydrophobic-aromatic",0.890);
+		Properties props = new Properties();
+		try 
+		{
+			props.load(ResourceManager.class.getResourceAsStream("NRPSpredictor2-model-qualities.properties"));
+		} 
+		catch (IOException e) 
+		{
+			throw new RuntimeException(e.getMessage(),e);
+		}
 		
-		precs.put("phe,trp,phg,tyr,bht", 0.881);
-		precs.put("ser,thr,dhpg,hpg", 0.967 );
-		precs.put("gly,ala,val,leu,ile,abu,iva",0.947 );
-		precs.put("asp,asn,glu,gln,aad", 0.969);
-		precs.put("cys", 0.975);
-		precs.put("orn,lys,arg", 0.898);
-		precs.put("pro,pip", 0.867);
-		precs.put("dhb,sal", 1.00);
+		for(Object key: props.keySet())
+		{
+			precs.put(key.toString(), Double.parseDouble(props.get(key).toString()) );
+		}
 		
-		precs.put("aad",1.00 );
-		precs.put("val,leu,ile,abu,iva", 0.892);
-		precs.put("arg",1.00 );
-		precs.put("asp,asn", 0.969);
-		precs.put("cys", 0.983);
-		precs.put("dhb,sal", 1.000);
-		precs.put("glu,gln", 0.85);
-		precs.put("orn,horn",0.900 );
-		precs.put("tyr,bht", 0.892);
-		precs.put("pro", 0.938);
-		precs.put("ser", 1.0);
-		precs.put("dhpg,hpg", 1.000);
-		precs.put("phe,trp", 0.608);
-		precs.put("gly,ala", 0.938);
-		precs.put("thr", 0.978);
+		props = new Properties();
+		try 
+		{
+			props.load(ResourceManager.class.getResourceAsStream("NRPSpredictor1-model-qualities.properties"));
+		} 
+		catch (IOException e) 
+		{
+			throw new RuntimeException(e.getMessage(),e);
+		}
 		
-		precs.put("ala",0.901);
-		precs.put("asn",0.934);
-		precs.put("asp",0.700);
-		precs.put("bht",0.782);
-		precs.put("dhb",1.00);
-		precs.put("dhpg",0.967);
-		precs.put("gln",0.775);
-		precs.put("glu",0.760);
-		precs.put("gly",0.902);
-		precs.put("hpg",1.0);
-		precs.put("ile",1.0);
-		precs.put("iva",0.933);
-		precs.put("leu",0.957);
-		precs.put("lys",0.500);
-		precs.put("phe",0.740);
-		precs.put("trp",0.400);
-		precs.put("tyr",0.671);
-		precs.put("val",0.801);
-		
-		precsNRPS1.put("phe,trp,phg,tyr,bht", 0.881);
-		precsNRPS1.put("ser,thr,dhpg,hpg", 0.963 );
-		precsNRPS1.put("gly,ala,val,leu,ile,abu,iva",0.940);
-		precsNRPS1.put("asp,asn,glu,gln,aad", 0.969);
-		precsNRPS1.put("cys", 0.958);
-		precsNRPS1.put("orn,lys,arg", 0.898);
-		precsNRPS1.put("pro,pip", 0.811);
-		precsNRPS1.put("dhb,sal", 1.00);
-		
-		precsNRPS1.put("aad",1.00 );
-		precsNRPS1.put("val,leu,ile,abu,iva", 0.90);
-		precsNRPS1.put("arg",1.00 );
-		precsNRPS1.put("asp,asn", 0.969);
-		precsNRPS1.put("cys", 1.00);
-		precsNRPS1.put("dhb,sal", 1.000);
-		precsNRPS1.put("glu,gln", 0.86);
-		precsNRPS1.put("orn,horn",0.80 );
-		precsNRPS1.put("tyr,bht", 0.825);
-		precsNRPS1.put("pro", 0.900);
-		precsNRPS1.put("ser", 0.936);
-		precsNRPS1.put("thr", 0.942);
-		precsNRPS1.put("dhpg,hpg", 0.985);
-		precsNRPS1.put("phe,trp", 0.671);
-		precsNRPS1.put("gly,ala", 0.859);
-		precsNRPS1.put("thr,dht", 0.942);
+		for(Object key: props.keySet())
+		{
+			precsNRPS1.put(key.toString(), Double.parseDouble(props.get(key).toString()) );
+		}
 	}
-	
 	
 	public static void parseCommandline(String[] argv)
 	{

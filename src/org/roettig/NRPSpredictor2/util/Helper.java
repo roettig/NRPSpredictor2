@@ -9,6 +9,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.roettig.NRPSpredictor2.extraction.ADomSigExtractor;
 import org.roettig.NRPSpredictor2.extraction.ADomain;
 import org.roettig.NRPSpredictor2.hmmer.HMMPfam;
@@ -17,14 +19,13 @@ import org.roettig.NRPSpredictor2.hmmer.HMMPfamParser.DomainHit;
 import org.roettig.NRPSpredictor2.hmmer.HMMPfamParser.QueryResult;
 import org.roettig.NRPSpredictor2.resources.ResourceManager;
 
-import com.sun.istack.internal.logging.Logger;
 
 public class Helper
 {
     /**
      * The logger.
      */
-    private static final Logger logger = Logger.getLogger(Helper.class);
+    private static final Logger logger = LogManager.getLogger(Helper.class);
     
     
     /**
@@ -64,9 +65,6 @@ public class Helper
 		    if(null!=in)
 		        in.close();    
 		}
-		
-		
-		
 	}
 	
 	/**

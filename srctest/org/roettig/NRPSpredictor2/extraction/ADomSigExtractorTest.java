@@ -13,9 +13,10 @@ public class ADomSigExtractorTest
 	{
 		ADomSigExtractor e = new ADomSigExtractor();
 		
-		e.setADomainTopline("KGVmveHrnvvnlvkwlneryflfgeeddllgesdrvLqfssAysFDaSvweifgaLLnGgtLVivpkefsetrlDpeaLaalieregiTvlnltPsllnllldaaeeatpdfapedlssLrrvlvGGEaLspslarrlrerfpdragvrliNaYGPTEtTVcaTi");
-		e.setADomainDownline("KGVMVGQTAIVNRLLWMQN---HYPLTG-----EDVVAQKTP-CSFDVSVWEFFWPFIAGAKLVMAEPE---AHRDPLAMQQFFAEYGVTTTHFVPSMLAAFVASL---TPQTARQSCVTLKQVFCSGEALPADLCREWQQLTG--A--PLHNLYGPTEAAVDVSW");
-        e.setLysDomainTopline("daaeLRahLaarLPdYMVPsaVkfvvLdalPLTpNGKlDRkALPaPdaaa");
+		e.setADomainTopline(   "KGVmveHrnvvnlvkwlneryflfgeeddllgesdrvLqfssAysFDaSvweifgaLLnGgtLVivpkefsetrlDpeaLaalieregiTvlnltPsllnllldaaeeatpdfapedlssLrrvlvGGEaLspslarrlrerfpdragvrliNaYGPTEtTVcaTi");
+		e.setADomainDownline(  "KGVMVGQTAIVNRLLWMQN---HYPLTG-----EDVVAQKTP-CSFDVSVWEFFWPFIAGAKLVMAEPE---AHRDPLAMQQFFAEYGVTTTHFVPSMLAAFVASL---TPQTARQSCVTLKQVFCSGEALPADLCREWQQLTG--A--PLHNLYGPTEAAVDVSW");
+        
+		e.setLysDomainTopline( "daaeLRahLaarLPdYMVPsaVkfvvLdalPLTpNGKlDRkALPaPdaaa");
         e.setLysDomainDownline("DTSALQAQLRETLPPHMVPVV--LLQLPQLPLSANGKLDRKALPLPELKA");
 		
         e.extract();
