@@ -17,22 +17,65 @@ import org.roettig.NRPSpredictor2.hmmer.HMMPfamParser.DomainHit;
 import org.roettig.NRPSpredictor2.hmmer.HMMPfamParser.QueryResult;
 import org.roettig.NRPSpredictor2.resources.ResourceManager;
 
+import com.sun.istack.internal.logging.Logger;
+
 public class Helper
 {
-	public static void deployFile(InputStream in, String filename) throws IOException
+    /**
+     * The logger.
+     */
+    private static final Logger logger = Logger.getLogger(Helper.class);
+    
+    
+    /**
+     * Copys (deploys) a file from Java resource to file system.
+     *  
+     *  
+     * @param in
+     * @param filename
+     * 
+     * @throws IOException
+     */
+	public static void deployFile(InputStream in, String filename) 
+	throws 
+	    IOException
 	{
-		FileOutputStream fout = new FileOutputStream(filename);
+		FileOutputStream fout = null; 
+		
 		byte[] buffer = new byte[2048];
 		int size;
-		
-		while ((size = in.read(buffer, 0, 2048)) != -1)
+
+		try
 		{
-			fout.write(buffer, 0, size);
+		    fout = new FileOutputStream(filename);
+		    
+		    while ((size = in.read(buffer, 0, 2048)) != -1)
+	        {
+	            fout.write(buffer, 0, size);
+	        }    
 		}
-		fout.flush();
-		fout.close();
-		in.close();
+		finally
+		{
+		    if(null!=fout)
+		    {
+		        fout.flush();
+	            fout.close();
+		    }
+		    if(null!=in)
+		        in.close();    
+		}
+		
+		
+		
 	}
+	
+	/**
+     * Copys (deploys) a file from Java resource to file system (as temp file).
+     *  
+     * @param in
+     * 
+     * @throws IOException
+     */
 	
 	public static File deployFile(InputStream in)
 	{
@@ -46,6 +89,7 @@ public class Helper
 		{
 			throw new RuntimeException(e);
 		}
+				
 		return tmp;
 	}
 	
@@ -130,7 +174,7 @@ public class Helper
 					int Lstart = lys_hit.seqfrom;
 					if ((Aend + 200) > Lstart && (Aend < Lstart))
 					{
-						System.out.println("matching ADomain hit " + i
+						logger.info("matching ADomain hit " + i
 								+ " with LysDomain hit " + j);
 						aIdx2lIdx.put(i, j);
 						J++;
@@ -167,7 +211,7 @@ public class Helper
 					continue;
 				}
 
-				System.out.println(cur_adom.sig8a + " - " + cur_adom.sigstach);
+				logger.info(cur_adom.sig8a + " - " + cur_adom.sigstach);
 
 				cur_adom.sid = qr.getQueryId();
 				cur_adom.startPos = adom_hit.seqfrom;
