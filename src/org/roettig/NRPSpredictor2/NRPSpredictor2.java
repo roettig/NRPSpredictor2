@@ -508,6 +508,13 @@ public class NRPSpredictor2
 		return ret;
 	}
 	
+	/**
+	 * Parses a prediction file output by external NRPS1 predictor.
+	 * 
+	 * @param filename path of prediction file
+	 * 
+	 * @throws Exception
+	 */
 	public static void parseNRPS1(String filename) 
 	throws 
 	    Exception
@@ -628,24 +635,59 @@ public class NRPSpredictor2
 		}
 	}
 	
-	public static void store(String filename, List<ADomain> data) throws IOException
+	/**
+	 * Stores XML-serialized ADomain (with predictions) to file.
+	 *  
+	 * @param filename path of outputfile
+	 * @param data array of ADomains
+	 * 
+	 * @throws IOException
+	 */
+	public static void store(String filename, List<ADomain> data) 
+	throws 
+		IOException
 	{
 		XMLEncoder encoder =
 	           new XMLEncoder(
 	              new BufferedOutputStream(
 	                new FileOutputStream(outputfile)));
-	    encoder.writeObject(data);
-	    encoder.close();
+	    try
+	    {
+	    	encoder.writeObject(data);
+	    }
+	    finally
+	    {
+	    	if(null!=encoder)
+	    		encoder.close();
+	    }
 	}
 	
+	/**
+	 * Loads from XML-serialized an array of ADomains (with predictions).
+	 *  
+	 * @param filename path of outputfile
+	 * 
+	 * @throws Exception
+	 */
 	@SuppressWarnings("unchecked")
-	public static List<ADomain> load(String filename) throws Exception
+	public static List<ADomain> load(String filename) 
+	throws 
+		Exception
 	{
+		List<ADomain> o = null;
 		XMLDecoder decoder =
             new XMLDecoder(new BufferedInputStream(
                 new FileInputStream(filename)));
-        List<ADomain> o = (List<ADomain>) decoder.readObject();
-        decoder.close();
+        try
+        {
+        	 o = (List<ADomain>) decoder.readObject();
+        }
+        finally
+        {
+        	if(null!=decoder)
+        		decoder.close();
+        }
+        
         return o;
 	}
 		
@@ -696,24 +738,56 @@ public class NRPSpredictor2
 		out.close();
 	}
 	
-	public static void fungalPrediction() throws ParseException, IOException
+	/**
+	 * Triggers a fungal prediction for all ADomains.
+	 * 
+	 * @throws ParseException
+	 * @throws IOException
+	 */
+	public static void fungalPrediction() 
+	throws 
+		ParseException, 
+		IOException
 	{	
 		FungalNRPSPredictor2 fungalPred2 = new FungalNRPSPredictor2();
 		fungalPred2.predict(adoms);
 	}
 	
-	public static void bacterialPrediction() throws ParseException, IOException
+	/**
+	 * Triggers a bacterial prediction for all ADomains.
+	 * 
+	 * @throws ParseException
+	 * @throws IOException
+	 */
+	public static void bacterialPrediction() 
+	throws 
+		ParseException, 
+		IOException
 	{	
+		// NRPSpredictor1
 		BacterialNRPSPredictor bactPred1 = new BacterialNRPSPredictor();
 		bactPred1.predict(adoms);
+		
+		// NRPSpredictor2
 		BacterialNRPSPredictor2 bactPred2 = new BacterialNRPSPredictor2();
 		bactPred2.predict(adoms);
 	}
 	
-	public static void checkAD(String model) throws IOException
+	/**
+	 * Checks whether the ADomains fit into the applicability domain.
+	 * 
+	 * @param model name of the model
+	 * 
+	 * @throws IOException
+	 */
+	public static void checkAD(String model) 
+	throws 
+		IOException
 	{	
 		ADChecker adc = new ADChecker();
+		
 		svm_model mdl = svm.svm_load_model(String.format("data/models/%s_1class.mdl","bacterial"));
+		
 		adc.setModel(mdl);
 		adc.check(adoms);
 	}
