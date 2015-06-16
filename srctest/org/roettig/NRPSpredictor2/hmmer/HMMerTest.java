@@ -54,15 +54,18 @@ public class HMMerTest
 		QueryResult firstQueryResult = res.get(0);
 		
 		List<DomainHit> domainHits = firstQueryResult.getHits();
+		
 		assertEquals(2,domainHits.size());
+		
 		assertEquals(1.555906e-59,domainHits.get(0).evalue,1e-6);
-		assertEquals(5.116907E-24,domainHits.get(1).evalue,1e-6);
+		assertEquals(5.116907e-24,domainHits.get(1).evalue,1e-6);
 		
 		assertEquals(1.963560e+02,domainHits.get(0).score,1e-6);
 		assertEquals(7.837100e+01,domainHits.get(1).score,1e-6);
 		
 		List<DomainAlignment> alis = firstQueryResult.getAlignments();
 		assertEquals(2,alis.size());
+		
 		assertEquals("KGVmv + ++vn ++w+++   +++++      +d+v+q+++ +sFD+Svwe+f+++++G++LV++++e    ++Dp a++++++++g+T+++++Ps+l ++++     tp+ a   + +L+ v++ GEaL+++l+r ++++ +  a   l+N+YGPTE++V++++",alis.get(0).match);
 		assertEquals("KGVmveHrnvvnlvkwlneryflfgeeddllgesdrvLqfssAysFDaSvweifgaLLnGgtLVivpkefsetrlDpeaLaalieregiTvlnltPsllnllldaaeeatpdfapedlssLrrvlvGGEaLspslarrlrerfpdragvrliNaYGPTEtTVcaTi",alis.get(0).target);
 		assertEquals("KGVMVGQTAIVNRLLWMQN---HYPLTG-----EDVVAQKTP-CSFDVSVWEFFWPFIAGAKLVMAEPE---AHRDPLAMQQFFAEYGVTTTHFVPSMLAAFVASL---TPQTARQSCVTLKQVFCSGEALPADLCREWQQLTG--A--PLHNLYGPTEAAVDVSW",alis.get(0).query);

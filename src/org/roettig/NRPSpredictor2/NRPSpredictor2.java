@@ -11,9 +11,10 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -43,22 +44,74 @@ import org.roettig.NRPSpredictor2.util.Helper;
 
 
 public class NRPSpredictor2
-{	
-	/**
+{
+    /**
 	 * The logger.
 	 */
 	private static final Logger logger = LogManager.getLogger(NRPSpredictor2.class);
 	
-	public static void main(String[] argv) throws Exception
+	/**
+	 * Precisions of NRPSpredictor2 models.
+	 */
+	private static Map<String,Double> precs      = new HashMap<String,Double>();
+    
+	/**
+     * Precisions of NRPSpredictor1 models.
+     */
+	private static Map<String,Double> precsNRPS1 = new HashMap<String,Double>();
+    
+	/**
+	 * Default ASCII codepage of NRPSpredictor2.
+	 * 
+	 * Windows default codepage.
+	 */
+	private static final String DEFAULT_ASCII_CODEPAGE = "CP1252";
+
+	/**
+	 * Regular expression of allowed amino acid words over full amino acid letters including gap symbol.
+	 */
+	private static final String ALLOWED_AMINOACID_GAP_LETTERS_REGEXP = "[A,C,D,E,F,G,H,I,K,L,M,N,P,Q,R,S,T,V,W,X,Y,-]+";
+	
+	/**
+	 * The default e-value for HMMER.
+	 */
+	private static double DEFAULT_EVALUE = 0.00001;
+	
+	/**
+     *  NRPSpredictor2 parameters.
+     */
+    /* START NRPSpredictor2 parameters. */
+    private static boolean extractsigs    = false;
+    private static boolean bacterialMode  = true;
+    private static boolean debug = false;
+    private static String inputfile;
+    private static String outputfile;
+    private static String reportfile;
+    private static String datadir ="data";
+    private static List<ADomain> adoms = new ArrayList<ADomain>();
+    /* END NRPSpredictor2 parameters. */
+    
+	/**
+	 * NRPSPredictor2 main routine.
+	 * 
+	 * @param argv the JVM commandline arguments
+	 * 
+	 * @throws Exception
+	 */
+	public static void main(String[] argv) 
+	throws 
+	    Exception
 	{
 		
+	    // we use the UK locale here to have floats with dot symbol as
+	    // decimal separator and also more international messages 
 		Locale locale = new Locale("en", "UK");
 		Locale.setDefault(locale);
 
 		try
 		{
 			datadir = System.getProperty("datadir",datadir);
-			evalue  = Double.parseDouble(System.getProperty("evalue","0.00001"));
+			DEFAULT_EVALUE  = Double.parseDouble(System.getProperty("evalue",String.valueOf(DEFAULT_EVALUE)));
 			
 			if(argv.length==0)
 			{
@@ -71,9 +124,8 @@ public class NRPSpredictor2
 				System.exit(0);
 			}
 			
-
-			parseCommandline(argv);
-
+			init(argv);
+			
 			banner();
 
 			if(!(new File(inputfile).exists()))
@@ -122,21 +174,43 @@ public class NRPSpredictor2
 		}
 	}
 	
-	private static void debug(String message)
+	/**
+	 * Does initialization of NRPSpredictor2.
+	 * 
+	 * @param argv the JVM command line
+	 */
+	private static void init(String[] argv)
+    {
+	    fillPrecs();
+	    parseCommandline(argv);
+    }
+
+	/**
+	 * Send out a debug message.
+	 * 
+	 * @param message the message
+	 */
+    private static void debug(String message)
 	{
 		if(debug)
 			logger.debug(message);
 	}
 	
-	private static double evalue = 0.00001;
 	
+	/**
+	 * Extracts the 8A signatures fomr the full sequence FASTA file using HMMER.
+	 * 
+	 * @param infile the FASTA input file
+	 * 
+	 * @throws Exception
+	 */
 	private static void extractSigs(String infile) 
 	throws 
 		Exception
 	{
 		HMMPfam hmmpfam = new HMMPfam();
 		File model = Helper.deployFile(ResourceManager.class.getResourceAsStream("aa-activating.aroundLys.hmm"));
-		hmmpfam.run( evalue, model, new File(infile));
+		hmmpfam.run( DEFAULT_EVALUE, model, new File(infile));
 		
 		List<QueryResult> res = hmmpfam.getResults();
 		
@@ -243,6 +317,10 @@ public class NRPSpredictor2
 		}
 	}
 
+	/**
+	 * Prints the NRPSpredcitor2 banner.
+	 * 
+	 */
 	public static void banner()
 	{
 		logger.info("\n");
@@ -256,17 +334,16 @@ public class NRPSpredictor2
 		logger.info(" please cite: http://dx.doi.org/10.1093/nar/gkr323\n\n");			
 	}
 	
-	private static boolean extractsigs    = false;
-	private static boolean bacterialMode  = true;
-	private static boolean debug = false;
-	private static String inputfile;
-	private static String outputfile;
-	private static String reportfile;
-	private static String datadir ="data";
-	
-	private static List<ADomain> adoms = new ArrayList<ADomain>();
-	
-	public static void parseSigs(String filename) throws Exception
+	/**
+	 * Parses the FASTA file containing the 8A signatures. FASTA file is assumed to have some ASCII codepage.
+	 * 
+	 * @param filename name of signature file
+	 * 
+	 * @throws Exception
+	 */
+	public static void parseSigs(String filename) 
+	throws 
+	    Exception
 	{
 		if(!checkSignatureFormat(new File(filename)))
 			crash("invalid signature file supplied");
@@ -275,19 +352,31 @@ public class NRPSpredictor2
 		
 		try
 		{
-			br = new BufferedReader(new FileReader(filename));
+			br = new BufferedReader(new InputStreamReader( new FileInputStream(filename), DEFAULT_ASCII_CODEPAGE));
 			String line = null;
 			ADomain cur_adom = null;
+			
 			while ((line = br.readLine()) != null)   
 			{
+			    // remove any trailing/leading whitespaces
 				line = line.trim();
+				
+				// skip empty lines ..
 				if(line.equals(""))
 					continue;
+				
+				// split by tabulator
 				String toks[] = line.split("\\\t");
+				
 				cur_adom = new ADomain();
+				
+				// first token is 8A signature
 				cur_adom.setSig8a(toks[0]);
+
+				// if second token is set, use this as sequence identity
 				if(toks.length>1)
 					cur_adom.sid = toks[1];
+				
 				adoms.add(cur_adom);
 			}
 		}
@@ -298,6 +387,15 @@ public class NRPSpredictor2
 		}
 	}
 	
+	/**
+	 * Checks whether the signature file and contained signatures pass some simple checks.
+	 * 
+	 * @param infile the inputfile
+	 * 
+	 * @return
+	 * 
+	 * @throws IOException
+	 */
 	public static boolean checkSignatureFormat(File infile) 
 	throws 
 		IOException
@@ -306,8 +404,8 @@ public class NRPSpredictor2
 		
 		try
 		{
-			br= new BufferedReader(new FileReader(infile));
-		
+			br = new BufferedReader(new InputStreamReader( new FileInputStream(infile), DEFAULT_ASCII_CODEPAGE));
+			
 			String line = "";
 			while((line=br.readLine())!=null)
 			{
@@ -324,7 +422,7 @@ public class NRPSpredictor2
 				{
 					return false;
 				}
-				if(!sig.matches("[A,C,D,E,F,G,H,I,K,L,M,N,P,Q,R,S,T,V,W,X,Y,-]+"))
+				if(!sig.matches(ALLOWED_AMINOACID_GAP_LETTERS_REGEXP))
 					return false;
 			}
 		}
@@ -336,23 +434,29 @@ public class NRPSpredictor2
 		return true;
 	}
 	
+	/**
+	 * Do crash with the given message.
+	 * 
+	 * @param msg the crash message
+	 */
 	private static void crash(String msg)
 	{
 		logger.error(msg);
 		System.exit(1);
 	}
 
+	/**
+	 * Adjust NRPS1 model labels to NRPSpredictor2 label layouting.
+	 * 
+	 * @param lab the NRPSpredictor1 label
+	 * 
+	 * @return
+	 */
 	public static String fixLabel(String lab)
 	{
 		
-		// large cluster predictions
-		//String large_cluster[] = {"phe,trp,phg,tyr,bht","ser,thr,dhpg,hpg","gly,ala,val,leu,ile,abu,iva","asp,asn,glu,gln,aad","cys","orn,lys,arg","pro,pip","dhb,sal"}; 
-	
-		// small cluster predictions
-		//String small_cluster[] = {"aad","val,leu,ile,abu,iva","arg","asp,asn","cys","dhb,sal","glu,gln","orn,horn","tyr,bht","pro","ser","dhpg,hpg","phe,trp","gly,ala","thr"};	 
-
-		
 		String ret = "N/A";
+		
 		if(lab.equals("phe=trp=phg=tyr=bht"))
 			ret = "phe,trp,phg,tyr,bht";
 		if(lab.equals("ser=thr=ser-thr=dht=dhpg=dpg=hpg"))
@@ -399,123 +503,129 @@ public class NRPSpredictor2
 		if(lab.equals("gly=ala"))
 			ret = "gly,ala";		
 		if(lab.equals("thr=dht"))
-			ret = "thr,dht";		
+			ret = "thr,dht";
+		
 		return ret;
 	}
 	
-	public static void parseNRPS1(String filename) throws Exception
+	public static void parseNRPS1(String filename) 
+	throws 
+	    Exception
 	{
-		BufferedReader br = new BufferedReader(new FileReader(filename));
-		String line = null;
-		ADomain cur_adom = null;
-		while ((line = br.readLine()) != null)   
+		BufferedReader br = new BufferedReader(new InputStreamReader( new FileInputStream(filename), DEFAULT_ASCII_CODEPAGE));
+		
+		try
 		{
-			if(line.startsWith("[no hits above thresholds]"))
-			{
-				cur_adom = null;
-			}
-			if(line.startsWith("Score: "))
-			{
-				String scoreline = line.substring(6).trim();
-				double score = 0;
-				try
-				{
-					score = Double.parseDouble(scoreline);
-				}
-				catch(Exception e)
-				{
-					
-				}
-				cur_adom.pfamscore = score;
-			}
-			if(line.startsWith("Loc: "))
-			{
-				String locsline = line.substring(4).trim();
-				String[] locs = locsline.split("_");
-				
-				int start = -1;
-				int end   = -1;
-				try
-				{
-					start = Integer.parseInt(locs[0]);
-					end   = Integer.parseInt(locs[1]);
-				}
-				catch(Exception e)
-				{
-					
-				}
-				cur_adom.startPos = start;
-				cur_adom.endPos   = end;
-			}
-			if(line.startsWith("Modul: "))
-			{
-				if(cur_adom!=null)
-					adoms.add(cur_adom);
-				cur_adom = new ADomain();
-
-				String sid = line.substring(7).trim();
-				cur_adom.sid = sid;
-				continue;
-			}
-			if(line.contains("10 amino acid code"))
-			{
-				String toks[] = line.split(":");
-				String sig = toks[1].trim();
-				cur_adom.sigstach = sig;
-				continue;
-			}
-			if(line.contains("8A-Code"))
-			{
-				String toks[] = line.split(":");
-				String sig = toks[1].trim();
-				cur_adom.sig8a = sig;
-				continue;
-			}
-			if(line.contains("large clusters"))
-			{
-				while((line = br.readLine())!=null)
-				{
-					if(line.contains("small clusters"))
-						break;
-					if(line.contains("[no predictions"))
-					{
-						continue;
-					}
-					String toks[] = line.split(":");
-					String label = fixLabel(toks[0]);
-					if(precsNRPS1.containsKey(label))
-						cur_adom.addDetection(ADomain.NRPS1_LARGE_CLUSTER, toks[0], Double.parseDouble(toks[1]),precsNRPS1.get(label));
-					else
-						cur_adom.addDetection(ADomain.NRPS1_LARGE_CLUSTER, toks[0], Double.parseDouble(toks[1]),0.0);
-				}
-				while((line = br.readLine())!=null)
-				{
-					if(line.contains("Alis (>="))
-						break;
-					if(line.contains("[no predictions"))
-					{
-						continue;
-					}
-					String toks[] = line.split(":");
-					String label = fixLabel(toks[0]);
-					if(precsNRPS1.containsKey(label))
-						cur_adom.addDetection(ADomain.NRPS1_SMALL_CLUSTER, toks[0], Double.parseDouble(toks[1]),precsNRPS1.get(label));
-					else
-						cur_adom.addDetection(ADomain.NRPS1_SMALL_CLUSTER, toks[0], Double.parseDouble(toks[1]),0.0);
-					//cur_adom.addDetection(ADomain.NRPS1_SMALL_CLUSTER, toks[0], Double.parseDouble(toks[1]));
-				}
-				continue;
-			}
-			
+    		String line = null;
+    		ADomain cur_adom = null;
+    		while ((line = br.readLine()) != null)   
+    		{
+    			if(line.startsWith("[no hits above thresholds]"))
+    			{
+    				cur_adom = null;
+    			}
+    			if(line.startsWith("Score: "))
+    			{
+    				String scoreline = line.substring(6).trim();
+    				double score = 0;
+    				try
+    				{
+    					score = Double.parseDouble(scoreline);
+    				}
+    				catch(Exception e)
+    				{
+    					
+    				}
+    				cur_adom.pfamscore = score;
+    			}
+    			if(line.startsWith("Loc: "))
+    			{
+    				String locsline = line.substring(4).trim();
+    				String[] locs = locsline.split("_");
+    				
+    				int start = -1;
+    				int end   = -1;
+    				try
+    				{
+    					start = Integer.parseInt(locs[0]);
+    					end   = Integer.parseInt(locs[1]);
+    				}
+    				catch(Exception e)
+    				{
+    					
+    				}
+    				cur_adom.startPos = start;
+    				cur_adom.endPos   = end;
+    			}
+    			if(line.startsWith("Modul: "))
+    			{
+    				if(cur_adom!=null)
+    					adoms.add(cur_adom);
+    				cur_adom = new ADomain();
+    
+    				String sid = line.substring(7).trim();
+    				cur_adom.sid = sid;
+    				continue;
+    			}
+    			if(line.contains("10 amino acid code"))
+    			{
+    				String toks[] = line.split(":");
+    				String sig = toks[1].trim();
+    				cur_adom.sigstach = sig;
+    				continue;
+    			}
+    			if(line.contains("8A-Code"))
+    			{
+    				String toks[] = line.split(":");
+    				String sig = toks[1].trim();
+    				cur_adom.sig8a = sig;
+    				continue;
+    			}
+    			if(line.contains("large clusters"))
+    			{
+    				while((line = br.readLine())!=null)
+    				{
+    					if(line.contains("small clusters"))
+    						break;
+    					if(line.contains("[no predictions"))
+    					{
+    						continue;
+    					}
+    					String toks[] = line.split(":");
+    					String label = fixLabel(toks[0]);
+    					if(precsNRPS1.containsKey(label))
+    						cur_adom.addDetection(ADomain.NRPS1_LARGE_CLUSTER, toks[0], Double.parseDouble(toks[1]),precsNRPS1.get(label));
+    					else
+    						cur_adom.addDetection(ADomain.NRPS1_LARGE_CLUSTER, toks[0], Double.parseDouble(toks[1]),0.0);
+    				}
+    				while((line = br.readLine())!=null)
+    				{
+    					if(line.contains("Alis (>="))
+    						break;
+    					if(line.contains("[no predictions"))
+    					{
+    						continue;
+    					}
+    					String toks[] = line.split(":");
+    					String label = fixLabel(toks[0]);
+    					if(precsNRPS1.containsKey(label))
+    						cur_adom.addDetection(ADomain.NRPS1_SMALL_CLUSTER, toks[0], Double.parseDouble(toks[1]),precsNRPS1.get(label));
+    					else
+    						cur_adom.addDetection(ADomain.NRPS1_SMALL_CLUSTER, toks[0], Double.parseDouble(toks[1]),0.0);
+    				}
+    				continue;
+    			}
+    			
+    		}
+    		
+    		if(cur_adom!=null)
+    			adoms.add(cur_adom);
 		}
-		
-		if(cur_adom!=null)
-			adoms.add(cur_adom);
-		
-		br.close();
-		
-		//store(outputdir+"/preds",adoms);
-		
+		finally
+		{
+		    if(null!=br)
+		        br.close();
+		}
 	}
 	
 	public static void store(String filename, List<ADomain> data) throws IOException
@@ -539,10 +649,23 @@ public class NRPSpredictor2
         return o;
 	}
 		
-	private static void report(String outputfile, List<ADomain> adoms) throws FileNotFoundException
+	/**
+	 * Writes out to a ASII file the prediction report.
+	 *  
+	 * @param outputfile path of outputfile
+	 * @param adoms list of ADomains to report
+	 * 
+	 * @throws FileNotFoundException
+	 * @throws UnsupportedEncodingException
+	 */
+	private static void report(String outputfile, List<ADomain> adoms) 
+	throws 
+	    FileNotFoundException, 
+	    UnsupportedEncodingException
 	{
-		PrintWriter out = new PrintWriter( new File(reportfile) );
+		PrintWriter out = new PrintWriter( new File(reportfile), DEFAULT_ASCII_CODEPAGE );
 		out.println(String.format("#%s<tab>%s<tab>%s<tab>%s<tab>%s<tab>%s<tab>%s<tab>%s<tab>%s<tab>%s<tab>%s<tab>%s<tab>%s","sequence-id","8A-signature","stachelhaus-code","3class-pred","large-class-pred","small-class-pred","single-class-pred","nearest stachelhaus code","NRPS1pred-large-class-pred","NRPS2pred-large-class-pred","outside applicability domain?","coords","pfam-score"));
+		
 		for(ADomain adom: adoms)
 		{
 			// id <tab> 8a_sig <tab> stachelhaus_sig <tab> three_class_prediction_nrps2 <tab> large_cluster_prediction_nrps2 <tab> small_cluster_prediction_nrps2 <tab> single_aa_prediction_nrps2 <tab> nearest_stachelhaus_specificity <tab> large_cluster_prediction_nrps1 <tab> small_cluster_prediction_nrps1 <tab> isAdomainUnusual? <tab> coords <pfam-score>
@@ -595,9 +718,10 @@ public class NRPSpredictor2
 		adc.check(adoms);
 	}
 	
-	public static Map<String,Double> precs      = new HashMap<String,Double>();
-	public static Map<String,Double> precsNRPS1 = new HashMap<String,Double>();
-	
+	/**
+	 * Reads model qualities from file and stores them in HashMap.
+	 * 
+	 */
 	public static void fillPrecs()
 	{
 		Properties props = new Properties();
@@ -631,10 +755,13 @@ public class NRPSpredictor2
 		}
 	}
 	
+	/**
+	 * Parses the command line arguments.
+	 * 
+	 * @param argv the Java commandline array
+	 */
 	public static void parseCommandline(String[] argv)
 	{
-		fillPrecs();
-		
 		Getopt g = new Getopt("NRPSpredictor2", argv, "i:o:b:s:r:d");
 		//
 		int c;
