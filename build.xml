@@ -1,6 +1,7 @@
 <project xmlns:ivy="antlib:org.apache.ivy.ant" name="NRPSpredictor2" default="build" basedir=".">
 
 	<target name="resolve" description="retrieve dependencies with ivy">
+		<!-- use type=jar to skip source jars-->
 		<ivy:retrieve />
 	</target>
 	

@@ -5,11 +5,13 @@ import java.util.concurrent.Executors;
 
 import javax.xml.ws.Endpoint;
 
-import com.sun.istack.internal.logging.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 
 public class NRPSPredictor2ServicePublisher
 {
-	private static final Logger logger = Logger.getLogger(NRPSPredictor2ServicePublisher.class);
+	private static final Logger logger = LogManager.getLogger(NRPSPredictor2ServicePublisher.class);
 			
 	public static void main(String[] args)
 	{
