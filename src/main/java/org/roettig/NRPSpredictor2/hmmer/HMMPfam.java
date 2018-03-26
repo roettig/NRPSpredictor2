@@ -3,12 +3,22 @@ package org.roettig.NRPSpredictor2.hmmer;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+
+import org.roettig.NRPSpredictor2.NRPSpredictor2;
 import org.roettig.NRPSpredictor2.hmmer.HMMPfamParser.QueryResult;
 import org.roettig.NRPSpredictor2.util.Helper;
 import org.roettig.NRPSpredictor2.util.ToolRunner;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class HMMPfam
 {
+	/**
+	 * The logger.
+	 */
+	private static final Logger logger = LoggerFactory.getLogger(HMMPfam.class);
+	
+	
 	private static File executable;
 	private static String tmpdir;
 
@@ -38,6 +48,7 @@ public class HMMPfam
 				Helper.deployFile(HMMPfam.class.getResourceAsStream("hmmpfam.win32"), executable.getAbsolutePath());
 			 	Helper.deployFile(HMMPfam.class.getResourceAsStream("cygwin1.dll"), tmpdir+File.separator+"cygwin1.dll");
 			} 
+			logger.info("Deployed hmmpfam to {}", executable.getAbsolutePath());
 			executable.setExecutable(true);
 			executable.deleteOnExit();
 		} 

@@ -14,10 +14,10 @@ the Mac OS platform.
 
 To build the NRPSPredictor2 please issue on the shell
 
-ant
+mvn package
 
 and the respective jar will be built and placed in the
-build directory.
+target directory.
 
 An exemplary shell script launching NRPSPredictor2 can
 be found in the root directory. This script file can be

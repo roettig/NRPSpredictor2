@@ -21,7 +21,7 @@ public class HMMerTest
 		HMMPfam hmmpfam = new HMMPfam();
 		hmmpfam.debugModeOn();
 		File model = Helper.deployFile(ResourceManager.class.getResourceAsStream("aa-activating.aroundLys.hmm"));
-		hmmpfam.run( evalue, model, new File("srctest/testdata/one-domain.fa"));
+		hmmpfam.run( evalue, model, new File("src/test/resources/testdata/one-domain.fa"));
 		
 		
 		List<QueryResult> res = hmmpfam.getResults();
@@ -45,7 +45,7 @@ public class HMMerTest
 		HMMPfam hmmpfam = new HMMPfam();
 		hmmpfam.debugModeOn();
 		File model = Helper.deployFile(ResourceManager.class.getResourceAsStream("aa-activating.aroundLys.hmm"));
-		hmmpfam.run( evalue, model, new File("srctest/testdata/two-domains.fa"));
+		hmmpfam.run( evalue, model, new File("src/test/resources/testdata/two-domains.fa"));
 		
 		
 		List<QueryResult> res = hmmpfam.getResults();
