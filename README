@@ -38,7 +38,7 @@ sh runNRPSpredictor2.sh -i examples/example.fa -s 0 -r report
 # if you have a file with already extracted signatures 
 # you issue
 
-sh runNRPSpredictor2.sh -i examples/examples.sigs -s 1 -r report
+sh runNRPSpredictor2.sh -i examples/examples.sig -s 1 -r report
 
 
 (Windows)
@@ -51,7 +51,7 @@ runNRPSpredictor2.bat -i examples/example.fa -s 0 -r report
 # if you have a file with already extracted signatures 
 # you issue
 
-runNRPSpredictor2.bat -i examples/examples.sigs -s 1 -r report
+runNRPSpredictor2.bat -i examples/examples.sig -s 1 -r report
 
 
 
