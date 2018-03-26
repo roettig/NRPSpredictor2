@@ -7,17 +7,16 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.roettig.NRPSpredictor2.NRPSpredictor2;
 import org.roettig.NRPSpredictor2.extraction.ADomain;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class NearestNeighborPredictor implements Predictor
 {
 	/**
 	 * The logger.
 	 */
-	private static final Logger logger = LogManager.getLogger(NRPSpredictor2.class);
+	private static final Logger logger = LoggerFactory.getLogger(NearestNeighborPredictor.class);
 	
 	private static final String DEFAULT_ASCII_CODEPAGE = "CP1252";
 	
@@ -37,8 +36,8 @@ public class NearestNeighborPredictor implements Predictor
 		}
 		catch (IOException e)
 		{
-			logger.error(e);
-			throw new RuntimeException(e);
+			logger.error("Unexpected Exception", e);
+			throw new RuntimeException(e.getMessage(), e);
 		}
 	}
 	

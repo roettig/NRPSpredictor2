@@ -1,7 +1,5 @@
 package org.roettig.NRPSpredictor2;
 
-import gnu.getopt.Getopt;
-
 import java.beans.XMLDecoder;
 import java.beans.XMLEncoder;
 import java.io.BufferedInputStream;
@@ -23,11 +21,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 
-import libsvm.svm;
-import libsvm.svm_model;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.roettig.NRPSpredictor2.extraction.ADomSigExtractor;
 import org.roettig.NRPSpredictor2.extraction.ADomain;
 import org.roettig.NRPSpredictor2.hmmer.HMMPfam;
@@ -41,6 +34,12 @@ import org.roettig.NRPSpredictor2.predictors.Detection;
 import org.roettig.NRPSpredictor2.predictors.FungalNRPSPredictor2;
 import org.roettig.NRPSpredictor2.resources.ResourceManager;
 import org.roettig.NRPSpredictor2.util.Helper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import gnu.getopt.Getopt;
+import libsvm.svm;
+import libsvm.svm_model;
 
 
 public class NRPSpredictor2
@@ -48,7 +47,7 @@ public class NRPSpredictor2
     /**
 	 * The logger.
 	 */
-	private static final Logger logger = LogManager.getLogger(NRPSpredictor2.class);
+	private static final Logger logger = LoggerFactory.getLogger(NRPSpredictor2.class);
 	
 	/**
 	 * Precisions of NRPSpredictor2 models.

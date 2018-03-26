@@ -5,13 +5,13 @@ import java.util.concurrent.Executors;
 
 import javax.xml.ws.Endpoint;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 public class NRPSPredictor2ServicePublisher
 {
-	private static final Logger logger = LogManager.getLogger(NRPSPredictor2ServicePublisher.class);
+	private static final Logger logger = LoggerFactory.getLogger(NRPSPredictor2ServicePublisher.class);
 			
 	public static void main(String[] args)
 	{

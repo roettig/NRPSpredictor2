@@ -8,19 +8,19 @@ import javax.annotation.Resource;
 import javax.jws.WebService;
 import javax.xml.ws.WebServiceContext;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.roettig.NRPSpredictor2.extraction.ADomain;
 import org.roettig.NRPSpredictor2.predictors.BacterialNRPSPredictor2;
 import org.roettig.NRPSpredictor2.predictors.Detection;
 import org.roettig.NRPSpredictor2.util.Helper;
 import org.roettig.NRPSpredictor2.ws.Sequence.SequenceType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 @WebService(endpointInterface = "org.roettig.NRPSpredictor2.ws.NRPSPredictor2Service",serviceName="NRPSPredictor2Service")
 public class NRPSPredictor2ServiceImpl implements NRPSPredictor2Service
 {
-	private static final Logger logger = LogManager.getLogger(NRPSPredictor2ServiceImpl.class);
+	private static final Logger logger = LoggerFactory.getLogger(NRPSPredictor2ServiceImpl.class);
 	
 	@Resource 
 	WebServiceContext context;
